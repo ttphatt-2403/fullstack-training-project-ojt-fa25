@@ -16,39 +16,37 @@ Tích hợp frontend, backend và database.
 ---
 
 ## 📂 Cấu trúc repo
+
+```
 fullstack-training-project/
-│
-│── mooc1/                            # Tuần 1-2: Khởi động
-│   ├── backend/                      # Code .NET API cơ bản
-│   ├── frontend/                     # Code ReactJS cơ bản
-│   ├── database/                     # Script tạo DB + bảng Users
-│   └── report-mooc1-week1-2.docx     # Báo cáo tuần 1-2
-│
-│── mooc2/                            # Tuần 3-4: Học sâu công nghệ
-│   ├── backend/                      # API CRUD nâng cao, EF Core migrations
-│   ├── frontend/                     # Form login/register, gọi API
-│   ├── database/                     # SQL nâng cao (query, migration script)
-│   └── report-mooc2-week3-4.docx     # Báo cáo tuần 3-4
-│
-│── mooc3/                            # Tuần 5-7: Tham gia dự án
-│   ├── backend/                      # API Auth, Authorization, Role-based
-│   ├── frontend/                     # UI tích hợp, dashboard
-│   ├── database/                     # Script phân quyền, dữ liệu demo
-│   └── report-mooc3-week5-7.docx     # Báo cáo tuần 5-7
-│
-│── mooc4/                            # Tuần 8-11: Thực hiện & tối ưu
-│   ├── backend/                      # API tối ưu, caching, pagination
-│   ├── frontend/                     # Validation, routing, lazy loading
-│   ├── database/                     # Indexing, stored procedure
-│   └── report-mooc4-week8-11.docx    # Báo cáo tuần 8-11
-│
-│── mooc5/                            # Tuần 12-14: Hoàn thiện & tổng kết
-│   ├── backend/                      # Backend hoàn thiện
-│   ├── frontend/                     # Frontend hoàn thiện
-│   ├── database/                     # Script final DB
-│   └── report-mooc5-week12-14.docx   # Báo cáo tổng kết
-│
-│── README.md                         # README tổng quan toàn dự án
+├── README.md                         # README tổng quan toàn dự án
+├── .gitignore                        # Git ignore rules
+├── mooc1/                           # Tuần 1-2: Khởi động ✅
+│   ├── backend/                     # Code .NET API cơ bản
+│   ├── frontend/                    # Code ReactJS cơ bản
+│   ├── database/                    # Script tạo DB + bảng Users
+│   └── report-mooc1-week1-2.docx    # Báo cáo tuần 1-2
+├── mooc2/                           # Tuần 3-4: Học sâu công nghệ 🔄
+│   ├── backend/                     # API CRUD nâng cao, EF Core migrations
+│   ├── frontend/                    # Form login/register, gọi API
+│   ├── database/                    # SQL nâng cao (query, migration script)
+│   └── report-mooc2-week3-4.docx    # Báo cáo tuần 3-4
+├── mooc3/                           # Tuần 5-7: Tham gia dự án 📅
+│   ├── backend/                     # API Auth, Authorization, Role-based
+│   ├── frontend/                    # UI tích hợp, dashboard
+│   ├── database/                    # Script phân quyền, dữ liệu demo
+│   └── report-mooc3-week5-7.docx    # Báo cáo tuần 5-7
+├── mooc4/                           # Tuần 8-11: Thực hiện & tối ưu 📅
+│   ├── backend/                     # API tối ưu, caching, pagination
+│   ├── frontend/                    # Validation, routing, lazy loading
+│   ├── database/                    # Indexing, stored procedure
+│   └── report-mooc4-week8-11.docx   # Báo cáo tuần 8-11
+└── mooc5/                           # Tuần 12-14: Hoàn thiện & tổng kết 📅
+    ├── backend/                     # Backend hoàn thiện
+    ├── frontend/                    # Frontend hoàn thiện
+    ├── database/                    # Script final DB
+    └── report-mooc5-week12-14.docx  # Báo cáo tổng kết
+```
 
 ---
 
