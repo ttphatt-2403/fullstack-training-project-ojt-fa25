@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import userService from "../services/userService";
 import UserTable from "../components/UserTable";
 import UserForm from "../components/UserForm";
@@ -100,15 +101,18 @@ const AdminPage = () => {
 
   return (
     <div className="page-container">
-      <div className="admin-dashboard">
-        
-        {/* Header - Chỉ có title và logout */}
-        <div className="admin-header">
-          <h1 className="page-title">👑 Admin Dashboard</h1>
-          <div className="admin-actions">
-            <button className="btn-secondary" onClick={handleLogout}>
-              🚪 Đăng Xuất
+      <div className="user-management" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+
+        {/* Header mới giống CategoryManagement */}
+        <div className="page-header">
+          <div className="header-content">
+            <button 
+              className="back-btn"
+              onClick={() => window.location.href = '/dashboard'}
+            >
+              ← Quay lại Dashboard
             </button>
+            <h1>👤 Quản lý Người dùng</h1>
           </div>
         </div>
 

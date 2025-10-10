@@ -1,20 +1,21 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext";
 import "../styles/pages.css";
 
 const UserPage = () => {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  
+  const { user, logout } = useAuth();
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    logout();
     window.location.href = "/";
   };
 
+  if (!user) {
+    return <div className="page-container"><div className="page-card">Không tìm thấy thông tin người dùng.</div></div>;
+  }
   return (
     <div className="page-container">
       <div className="page-card" style={{maxWidth: '500px'}}>
         <h1 className="page-title">User Dashboard</h1>
-        
         {/* User Profile Header */}
         <div className="profile-header">
           <div className="avatar">
@@ -25,7 +26,6 @@ const UserPage = () => {
             {user.role === 'user' ? '👤 User' : user.role}
           </div>
         </div>
-
         {/* User Information Cards */}
         <div className="info-cards">
           <div className="info-card">
@@ -35,7 +35,6 @@ const UserPage = () => {
               <div className="info-value">{user.fullname || 'Chưa cập nhật'}</div>
             </div>
           </div>
-
           <div className="info-card">
             <div className="info-icon">🔑</div>
             <div className="info-content">
@@ -43,7 +42,6 @@ const UserPage = () => {
               <div className="info-value">{user.username || 'Chưa có'}</div>
             </div>
           </div>
-
           <div className="info-card">
             <div className="info-icon">📧</div>
             <div className="info-content">
@@ -51,7 +49,6 @@ const UserPage = () => {
               <div className="info-value">{user.email || 'Chưa cập nhật'}</div>
             </div>
           </div>
-
           <div className="info-card">
             <div className="info-icon">📱</div>
             <div className="info-content">
@@ -59,7 +56,6 @@ const UserPage = () => {
               <div className="info-value">{user.phone || 'Chưa cập nhật'}</div>
             </div>
           </div>
-
           <div className="info-card">
             <div className="info-icon">🆔</div>
             <div className="info-content">
@@ -68,7 +64,6 @@ const UserPage = () => {
             </div>
           </div>
         </div>
-
         {/* User Stats */}
         <div className="user-stats">
           <div className="stat-item">
@@ -80,7 +75,6 @@ const UserPage = () => {
             <div className="stat-label">Đăng nhập</div>
           </div>
         </div>
-
         <button className="btn-secondary" onClick={handleLogout}>
           🚪 Đăng Xuất
         </button>

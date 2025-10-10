@@ -18,11 +18,16 @@ namespace BackendApi.Controllers
 
         // GET: api/Category
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<CategoryViewModel>>> GetCategories()
         {
             var categories = await _context.Categories
-                .Include(c => c.Books)
                 .OrderBy(c => c.Name)
+                .Select(c => new CategoryViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description
+                })
                 .ToListAsync();
 
             return Ok(categories);
@@ -30,11 +35,17 @@ namespace BackendApi.Controllers
 
         // GET: api/Category/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetCategory(int id)
+        public async Task<ActionResult<CategoryViewModel>> GetCategory(int id)
         {
             var category = await _context.Categories
-                .Include(c => c.Books)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .Where(c => c.Id == id)
+                .Select(c => new CategoryViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description
+                })
+                .FirstOrDefaultAsync();
 
             if (category == null)
             {
@@ -46,9 +57,9 @@ namespace BackendApi.Controllers
 
         // POST: api/Category
         [HttpPost]
-        public async Task<ActionResult<Category>> CreateCategory([FromBody] Category category)
+        public async Task<ActionResult<CategoryViewModel>> CreateCategory([FromBody] CategoryViewModel model)
         {
-            if (category == null)
+            if (model == null)
                 return BadRequest("Request body is null");
 
             if (!ModelState.IsValid)
@@ -56,32 +67,41 @@ namespace BackendApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Kiểm tra tên thể loại đã tồn tại chưa
             var existingCategory = await _context.Categories
-                .FirstOrDefaultAsync(c => c.Name.ToLower() == category.Name.ToLower());
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == model.Name.ToLower());
 
             if (existingCategory != null)
             {
                 return BadRequest(new { message = "Tên thể loại đã tồn tại." });
             }
 
-            category.Createdat = DateTime.Now;
-            category.Updatedat = DateTime.Now;
+            var category = new Category
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Createdat = DateTime.Now,
+                Updatedat = DateTime.Now
+            };
 
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
+            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, new CategoryViewModel
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Description = category.Description
+            });
         }
 
         // PUT: api/Category/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, [FromBody] Category category)
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryViewModel model)
         {
-            if (category == null)
+            if (model == null)
                 return BadRequest("Request body is null");
 
-            if (id != category.Id)
+            if (id != model.Id)
             {
                 return BadRequest("ID không khớp.");
             }
@@ -97,36 +117,26 @@ namespace BackendApi.Controllers
                 return NotFound(new { message = "Không tìm thấy thể loại này." });
             }
 
-            // Kiểm tra tên thể loại đã tồn tại chưa (trừ chính nó)
             var duplicateCategory = await _context.Categories
-                .FirstOrDefaultAsync(c => c.Name.ToLower() == category.Name.ToLower() && c.Id != id);
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == model.Name.ToLower() && c.Id != id);
 
             if (duplicateCategory != null)
             {
                 return BadRequest(new { message = "Tên thể loại đã tồn tại." });
             }
 
-            existingCategory.Name = category.Name;
-            existingCategory.Description = category.Description;
+            existingCategory.Name = model.Name;
+            existingCategory.Description = model.Description;
             existingCategory.Updatedat = DateTime.Now;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Cập nhật thể loại thành công.", category = existingCategory });
+            return Ok(new CategoryViewModel
+            {
+                Id = existingCategory.Id,
+                Name = existingCategory.Name,
+                Description = existingCategory.Description
+            });
         }
 
         // DELETE: api/Category/5
@@ -142,7 +152,6 @@ namespace BackendApi.Controllers
                 return NotFound(new { message = "Không tìm thấy thể loại này." });
             }
 
-            // Kiểm tra xem thể loại có sách nào không
             if (category.Books.Any())
             {
                 return BadRequest(new { message = "Không thể xóa thể loại này vì còn có sách thuộc thể loại này." });

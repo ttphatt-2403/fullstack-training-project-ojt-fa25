@@ -1,10 +1,10 @@
-import axios from "axios";
+import apiClient from "./apiClient";
 import { buildApiUrl, API_ENDPOINTS } from "./apiConfig";
 
 // Get all borrows
 export const getAllBorrows = async () => {
   try {
-    const response = await axios.get(buildApiUrl(API_ENDPOINTS.BORROWS));
+    const response = await apiClient.get(buildApiUrl(API_ENDPOINTS.BORROWS));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -14,7 +14,7 @@ export const getAllBorrows = async () => {
 // Get borrow by ID
 export const getBorrowById = async (id) => {
   try {
-    const response = await axios.get(buildApiUrl(`${API_ENDPOINTS.BORROWS}/${id}`));
+    const response = await apiClient.get(buildApiUrl(`${API_ENDPOINTS.BORROWS}/${id}`));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -24,7 +24,7 @@ export const getBorrowById = async (id) => {
 // Get borrows by user
 export const getBorrowsByUser = async (userId) => {
   try {
-    const response = await axios.get(buildApiUrl(`${API_ENDPOINTS.BORROWS}/user/${userId}`));
+    const response = await apiClient.get(buildApiUrl(`${API_ENDPOINTS.BORROWS}/user/${userId}`));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -34,7 +34,7 @@ export const getBorrowsByUser = async (userId) => {
 // Get overdue borrows
 export const getOverdueBorrows = async () => {
   try {
-    const response = await axios.get(buildApiUrl(`${API_ENDPOINTS.BORROWS}/overdue`));
+    const response = await apiClient.get(buildApiUrl(`${API_ENDPOINTS.BORROWS}/overdue`));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -50,8 +50,7 @@ export const createBorrow = async (borrowData) => {
       bookId: parseInt(borrowData.bookId),
       dueDate: borrowData.dueDate || new Date(Date.now() + 14*24*60*60*1000).toISOString() // 14 ngày từ hôm nay
     };
-
-    const response = await axios.post(buildApiUrl(API_ENDPOINTS.BORROWS), formData);
+    const response = await apiClient.post(buildApiUrl(API_ENDPOINTS.BORROWS), formData);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -61,7 +60,7 @@ export const createBorrow = async (borrowData) => {
 // Return book
 export const returnBook = async (borrowId, notes = null) => {
   try {
-    const response = await axios.put(
+    const response = await apiClient.put(
       buildApiUrl(`${API_ENDPOINTS.BORROWS}/${borrowId}/return`),
       { notes: notes || 'Đã trả sách' }
     );
@@ -74,7 +73,7 @@ export const returnBook = async (borrowId, notes = null) => {
 // Update borrow
 export const updateBorrow = async (id, borrowData) => {
   try {
-    const response = await axios.put(buildApiUrl(`${API_ENDPOINTS.BORROWS}/${id}`), {
+    const response = await apiClient.put(buildApiUrl(`${API_ENDPOINTS.BORROWS}/${id}`), {
       ...borrowData,
       id: parseInt(id)
     });
@@ -87,7 +86,7 @@ export const updateBorrow = async (id, borrowData) => {
 // Delete borrow
 export const deleteBorrow = async (id) => {
   try {
-    const response = await axios.delete(buildApiUrl(`${API_ENDPOINTS.BORROWS}/${id}`));
+    const response = await apiClient.delete(buildApiUrl(`${API_ENDPOINTS.BORROWS}/${id}`));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

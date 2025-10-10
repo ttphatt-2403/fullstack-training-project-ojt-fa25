@@ -7,6 +7,10 @@ export const login = async (username, password) => {
       username,
       password,
     });
+    // Lưu token vào localStorage
+    if (response.data && response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;

@@ -1,11 +1,11 @@
-import axios from "axios";
+import apiClient from "./apiClient";
 import { buildApiUrl, API_ENDPOINTS } from "./apiConfig";
 
 const userService = {
   // Get all users
   getAllUsers: async () => {
     try {
-      const response = await axios.get(buildApiUrl(API_ENDPOINTS.USERS));
+  const response = await apiClient.get(buildApiUrl(API_ENDPOINTS.USERS));
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error;
@@ -15,7 +15,7 @@ const userService = {
   // Get user by ID
   getUserById: async (id) => {
     try {
-      const response = await axios.get(buildApiUrl(`${API_ENDPOINTS.USERS}/${id}`));
+  const response = await apiClient.get(buildApiUrl(`${API_ENDPOINTS.USERS}/${id}`));
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error;
@@ -25,7 +25,7 @@ const userService = {
   // Create new user
   createUser: async (userData) => {
     try {
-      const response = await axios.post(buildApiUrl(API_ENDPOINTS.USERS), userData);
+  const response = await apiClient.post(buildApiUrl(API_ENDPOINTS.USERS), userData);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error;
@@ -35,7 +35,7 @@ const userService = {
   // Update user
   updateUser: async (id, userData) => {
     try {
-      const response = await axios.put(buildApiUrl(`${API_ENDPOINTS.USERS}/${id}`), userData);
+  const response = await apiClient.put(buildApiUrl(`${API_ENDPOINTS.USERS}/${id}`), userData);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error;
@@ -45,7 +45,7 @@ const userService = {
   // Delete user
   deleteUser: async (id) => {
     try {
-      const response = await axios.delete(buildApiUrl(`${API_ENDPOINTS.USERS}/${id}`));
+  const response = await apiClient.delete(buildApiUrl(`${API_ENDPOINTS.USERS}/${id}`));
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : error;
