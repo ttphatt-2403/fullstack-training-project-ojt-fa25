@@ -1,10 +1,10 @@
-import axios from "axios";
+import apiClient from "./apiClient";
 import { buildApiUrl, API_ENDPOINTS } from "./apiConfig";
 
 // Get all books
 export const getAllBooks = async () => {
   try {
-    const response = await axios.get(buildApiUrl(API_ENDPOINTS.BOOKS));
+    const response = await apiClient.get(buildApiUrl(API_ENDPOINTS.BOOKS));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -14,7 +14,7 @@ export const getAllBooks = async () => {
 // Get book by ID
 export const getBookById = async (id) => {
   try {
-    const response = await axios.get(buildApiUrl(`${API_ENDPOINTS.BOOKS}/${id}`));
+    const response = await apiClient.get(buildApiUrl(`${API_ENDPOINTS.BOOKS}/${id}`));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -27,8 +27,7 @@ export const searchBooks = async (query) => {
     const url = query 
       ? buildApiUrl(`${API_ENDPOINTS.BOOKS}/search?query=${encodeURIComponent(query)}`)
       : buildApiUrl(API_ENDPOINTS.BOOKS);
-    
-    const response = await axios.get(url);
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -41,8 +40,7 @@ export const getBooksByCategory = async (categoryId) => {
     const url = categoryId 
       ? buildApiUrl(`${API_ENDPOINTS.BOOKS}/category/${categoryId}`)
       : buildApiUrl(API_ENDPOINTS.BOOKS);
-    
-    const response = await axios.get(url);
+    const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -58,8 +56,7 @@ export const createBook = async (bookData) => {
       availableCopies: parseInt(bookData.availableCopies),
       categoryId: parseInt(bookData.categoryId)
     };
-
-    const response = await axios.post(buildApiUrl(API_ENDPOINTS.BOOKS), formData);
+    const response = await apiClient.post(buildApiUrl(API_ENDPOINTS.BOOKS), formData);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -76,8 +73,7 @@ export const updateBook = async (id, bookData) => {
       availableCopies: parseInt(bookData.availableCopies),
       categoryId: parseInt(bookData.categoryId)
     };
-
-    const response = await axios.put(buildApiUrl(`${API_ENDPOINTS.BOOKS}/${id}`), formData);
+    const response = await apiClient.put(buildApiUrl(`${API_ENDPOINTS.BOOKS}/${id}`), formData);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
@@ -87,7 +83,7 @@ export const updateBook = async (id, bookData) => {
 // Delete book
 export const deleteBook = async (id) => {
   try {
-    const response = await axios.delete(buildApiUrl(`${API_ENDPOINTS.BOOKS}/${id}`));
+    const response = await apiClient.delete(buildApiUrl(`${API_ENDPOINTS.BOOKS}/${id}`));
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error;
