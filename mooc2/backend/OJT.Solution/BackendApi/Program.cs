@@ -1,4 +1,6 @@
 ﻿using BackendApi.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -87,6 +89,24 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// Áp các migration khi khởi động ứng dụng (nếu có migration chưa áp)
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetService<ILogger<Program>>();
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<OjtDbContext>();
+        db.Database.Migrate();
+        logger?.LogInformation("Database migrations applied on startup.");
+    }
+    catch (Exception ex)
+    {
+        logger?.LogError(ex, "Error applying database migrations on startup.");
+        // Tuỳ chọn: không ném tiếp để app vẫn chạy; ở đây ta ném để rõ lỗi
+        throw;
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
