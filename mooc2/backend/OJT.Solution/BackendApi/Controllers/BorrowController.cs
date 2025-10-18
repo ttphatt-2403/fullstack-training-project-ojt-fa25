@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BackendApi.Models;
+using BackendApi.Dtos;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace BackendApi.Controllers
 {
@@ -184,9 +184,9 @@ namespace BackendApi.Controllers
 
         // POST: api/Borrow
         [HttpPost]
-        public async Task<ActionResult<Borrow>> CreateBorrow([FromBody] Borrow borrow)
+        public async Task<ActionResult<object>> CreateBorrow([FromBody] CreateBorrowRequest dto)
         {
-            if (borrow == null)
+            if (dto == null)
                 return BadRequest("Request body is null");
 
             if (!ModelState.IsValid)
@@ -195,14 +195,14 @@ namespace BackendApi.Controllers
             }
 
             // Kiểm tra User có tồn tại không
-            var userExists = await _context.Users.AnyAsync(u => u.Id == borrow.UserId);
+            var userExists = await _context.Users.AnyAsync(u => u.Id == dto.UserId);
             if (!userExists)
             {
                 return BadRequest(new { message = "User không tồn tại." });
             }
 
             // Kiểm tra Book có tồn tại không
-            var book = await _context.Books.FindAsync(borrow.BookId);
+            var book = await _context.Books.FindAsync(dto.BookId);
             if (book == null)
             {
                 return BadRequest(new { message = "Sách không tồn tại." });
@@ -216,8 +216,8 @@ namespace BackendApi.Controllers
 
             // Kiểm tra user đã mượn sách này chưa trả chưa
             var existingBorrow = await _context.Borrows
-                .AnyAsync(b => b.UserId == borrow.UserId &&
-                              b.BookId == borrow.BookId &&
+                .AnyAsync(b => b.UserId == dto.UserId &&
+                              b.BookId == dto.BookId &&
                               b.Status == "borrowed");
 
             if (existingBorrow)
@@ -225,15 +225,21 @@ namespace BackendApi.Controllers
                 return BadRequest(new { message = "User đã mượn sách này và chưa trả." });
             }
 
-            // Set default values
-            borrow.BorrowDate = DateTime.Now;
-            borrow.DueDate = borrow.DueDate == default ? DateTime.Now.AddDays(14) : borrow.DueDate; // 14 ngày mặc định
-            borrow.Status = "borrowed";
-            borrow.Createdat = DateTime.Now;
-            borrow.Updatedat = DateTime.Now;
+            // Map DTO -> entity
+            var borrow = new Borrow
+            {
+                UserId = dto.UserId,
+                BookId = dto.BookId,
+                BorrowDate = dto.BorrowDate ?? DateTime.Now,
+                DueDate = dto.DueDate == null || dto.DueDate == default ? DateTime.Now.AddDays(14) : dto.DueDate.Value,
+                Status = "borrowed",
+                Notes = dto.Notes,
+                Createdat = DateTime.Now,
+                Updatedat = DateTime.Now
+            };
 
             // Giảm AvailableCopies
-            book.AvailableCopies--;
+            book.AvailableCopies = (book.AvailableCopies ?? 0) - 1;
 
             _context.Borrows.Add(borrow);
             await _context.SaveChangesAsync();
@@ -246,7 +252,35 @@ namespace BackendApi.Controllers
                 .Reference(b => b.Book)
                 .LoadAsync();
 
-            return CreatedAtAction(nameof(GetBorrow), new { id = borrow.Id }, borrow);
+            // Build response DTO
+            var response = new BorrowResponse
+            {
+                Id = borrow.Id,
+                UserId = borrow.UserId,
+                BookId = borrow.BookId,
+                BorrowDate = borrow.BorrowDate,
+                DueDate = borrow.DueDate,
+                ReturnDate = borrow.ReturnDate,
+                Status = borrow.Status,
+                Notes = borrow.Notes,
+                Createdat = borrow.Createdat,
+                Updatedat = borrow.Updatedat,
+                User = new
+                {
+                    borrow.User.Id,
+                    borrow.User.Username,
+                    borrow.User.Fullname,
+                    borrow.User.Email
+                },
+                Book = new
+                {
+                    borrow.Book.Id,
+                    borrow.Book.Title,
+                    borrow.Book.Author
+                }
+            };
+
+            return CreatedAtAction(nameof(GetBorrow), new { id = borrow.Id }, response);
         }
 
         // PUT: api/Borrow/5/return
@@ -297,12 +331,12 @@ namespace BackendApi.Controllers
 
         // PUT: api/Borrow/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBorrow(int id, [FromBody] Borrow borrow)
+        public async Task<IActionResult> UpdateBorrow(int id, [FromBody] UpdateBorrowRequest dto)
         {
-            if (borrow == null)
+            if (dto == null)
                 return BadRequest("Request body is null");
 
-            if (id != borrow.Id)
+            if (id != dto.Id)
             {
                 return BadRequest("ID không khớp.");
             }
@@ -319,8 +353,8 @@ namespace BackendApi.Controllers
             }
 
             // Chỉ cho phép cập nhật một số trường
-            existingBorrow.DueDate = borrow.DueDate;
-            existingBorrow.Notes = borrow.Notes;
+            existingBorrow.DueDate = dto.DueDate ?? existingBorrow.DueDate;
+            existingBorrow.Notes = dto.Notes ?? existingBorrow.Notes;
             existingBorrow.Updatedat = DateTime.Now;
 
             try
@@ -339,7 +373,21 @@ namespace BackendApi.Controllers
                 }
             }
 
-            return Ok(new { message = "Cập nhật phiếu mượn thành công.", borrow = existingBorrow });
+            var response = new BorrowResponse
+            {
+                Id = existingBorrow.Id,
+                UserId = existingBorrow.UserId,
+                BookId = existingBorrow.BookId,
+                BorrowDate = existingBorrow.BorrowDate,
+                DueDate = existingBorrow.DueDate,
+                ReturnDate = existingBorrow.ReturnDate,
+                Status = existingBorrow.Status,
+                Notes = existingBorrow.Notes,
+                Createdat = existingBorrow.Createdat,
+                Updatedat = existingBorrow.Updatedat
+            };
+
+            return Ok(new { message = "Cập nhật phiếu mượn thành công.", borrow = response });
         }
 
         // DELETE: api/Borrow/5

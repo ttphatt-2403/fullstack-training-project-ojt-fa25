@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BackendApi.Models;
+using BackendApi.Dtos;
 using BCrypt.Net;
 
 namespace BackendApi.Controllers
@@ -18,63 +19,141 @@ namespace BackendApi.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            var users = await _context.Users
+                .Select(u => new UserResponse
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Fullname = u.Fullname,
+                    Phone = u.Phone,
+                    Avatarurl = u.Avatarurl,
+                    Dateofbirth = u.Dateofbirth,
+                    Role = u.Role,
+                    Isactive = u.Isactive,
+                    Createdat = u.Createdat,
+                    Updatedat = u.Updatedat
+                })
+                .ToListAsync();
+
+            return Ok(users);
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserResponse>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users
+                .Where(u => u.Id == id)
+                .Select(u => new UserResponse
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Fullname = u.Fullname,
+                    Phone = u.Phone,
+                    Avatarurl = u.Avatarurl,
+                    Dateofbirth = u.Dateofbirth,
+                    Role = u.Role,
+                    Isactive = u.Isactive,
+                    Createdat = u.Createdat,
+                    Updatedat = u.Updatedat
+                })
+                .FirstOrDefaultAsync();
+
             if (user == null)
             {
                 return NotFound();
             }
-            return user;
+
+            return Ok(user);
         }
 
         // POST: api/Users
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<UserResponse>> PostUser([FromBody] CreateUserRequest dto)
         {
-            // Hash password before saving
-            if (!string.IsNullOrEmpty(user.Password))
-            {
-                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            // Set timestamps
-            user.Createdat = DateTime.Now;
-            user.Updatedat = DateTime.Now;
-            user.Isactive = true; // Default active
+            var user = new User
+            {
+                Username = dto.Username,
+                Email = dto.Email,
+                Fullname = dto.Fullname,
+                Phone = dto.Phone,
+                Avatarurl = dto.Avatarurl,
+                Dateofbirth = dto.Dateofbirth,
+                Role = dto.Role,
+                Isactive = true,
+                Createdat = DateTime.Now,
+                Updatedat = DateTime.Now
+            };
+
+            // Hash password before saving
+            if (!string.IsNullOrEmpty(dto.Password))
+            {
+                user.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            }
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            var response = new UserResponse
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Fullname = user.Fullname,
+                Phone = user.Phone,
+                Avatarurl = user.Avatarurl,
+                Dateofbirth = user.Dateofbirth,
+                Role = user.Role,
+                Isactive = user.Isactive,
+                Createdat = user.Createdat,
+                Updatedat = user.Updatedat
+            };
+
+            return CreatedAtAction("GetUser", new { id = user.Id }, response);
         }
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> PutUser(int id, [FromBody] UpdateUserRequest dto)
         {
-            if (id != user.Id)
+            if (dto == null || id != dto.Id)
             {
                 return BadRequest();
             }
 
-            // Hash password if it's provided
-            if (!string.IsNullOrEmpty(user.Password))
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            // Update only properties that are not null in dto
+            if (dto.Fullname != null) user.Fullname = dto.Fullname;
+            if (dto.Email != null)
             {
-                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+                // simple email validation
+                if (!string.IsNullOrWhiteSpace(dto.Email) && !new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(dto.Email))
+                {
+                    return BadRequest(new { Email = "The Email field is not a valid e-mail address." });
+                }
+                if (!string.IsNullOrWhiteSpace(dto.Email)) user.Email = dto.Email;
+            }
+            if (dto.Phone != null) user.Phone = dto.Phone;
+            if (dto.Avatarurl != null) user.Avatarurl = dto.Avatarurl;
+            if (dto.Dateofbirth != null) user.Dateofbirth = dto.Dateofbirth;
+            if (dto.Role != null) user.Role = dto.Role;
+            if (dto.Isactive != null) user.Isactive = dto.Isactive;
+
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+            {
+                user.Password = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             }
 
-            // Update timestamp
             user.Updatedat = DateTime.Now;
-
-            _context.Entry(user).State = EntityState.Modified;
 
             try
             {
@@ -82,17 +161,26 @@ namespace BackendApi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                if (!UserExists(id)) return NotFound();
+                throw;
             }
 
-            return NoContent();
+            var response = new UserResponse
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Fullname = user.Fullname,
+                Phone = user.Phone,
+                Avatarurl = user.Avatarurl,
+                Dateofbirth = user.Dateofbirth,
+                Role = user.Role,
+                Isactive = user.Isactive,
+                Createdat = user.Createdat,
+                Updatedat = user.Updatedat
+            };
+
+            return Ok(response);
         }
 
         // DELETE: api/Users/5

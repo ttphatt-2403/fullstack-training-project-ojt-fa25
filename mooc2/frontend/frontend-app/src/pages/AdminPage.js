@@ -69,11 +69,31 @@ const AdminPage = () => {
       setLoading(true);
 
       if (editingUser) {
-        // Update existing user
-        await userService.updateUser(editingUser.id, userData);
+        // Update existing user - send only changed/non-empty fields to backend
+        const minimalPayload = { id: editingUser.id };
+        // compare fields and include only if different and not empty (except role)
+        Object.keys(userData).forEach((key) => {
+          const val = userData[key];
+          const original = editingUser[key];
+          // skip password when empty string
+          if (key === 'password') {
+            if (val && val.trim() !== '') minimalPayload.password = val;
+            return;
+          }
+          // always include role even if same (optional), but we include only when changed
+          if (val === undefined || val === null) return;
+          if (typeof val === 'string' && val.trim() === '') return; // skip empty strings
+          if (original === undefined || original === null) {
+            minimalPayload[key] = val;
+          } else if (String(val) !== String(original)) {
+            minimalPayload[key] = val;
+          }
+        });
+
+        await userService.updateUser(editingUser.id, minimalPayload);
         setUsers(
           users.map((u) =>
-            u.id === editingUser.id ? { ...u, ...userData } : u
+            u.id === editingUser.id ? { ...u, ...minimalPayload } : u
           )
         );
       } else {
