@@ -90,21 +90,23 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Áp các migration khi khởi động ứng dụng (nếu có migration chưa áp)
-using (var scope = app.Services.CreateScope())
+// Áp dụng migration tự động CHỈ cho Development hoặc Staging (an toàn cho người mới học)
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
-    var logger = scope.ServiceProvider.GetService<ILogger<Program>>();
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        var db = scope.ServiceProvider.GetRequiredService<OjtDbContext>();
-        db.Database.Migrate();
-        logger?.LogInformation("Database migrations applied on startup.");
-    }
-    catch (Exception ex)
-    {
-        logger?.LogError(ex, "Error applying database migrations on startup.");
-        // Tuỳ chọn: không ném tiếp để app vẫn chạy; ở đây ta ném để rõ lỗi
-        throw;
+        var logger = scope.ServiceProvider.GetService<ILogger<Program>>();
+        try
+        {
+            var db = scope.ServiceProvider.GetRequiredService<OjtDbContext>();
+            db.Database.Migrate();
+            logger?.LogInformation("Database migrations applied on startup (dev/staging).");
+        }
+        catch (Exception ex)
+        {
+            // Ghi log lỗi nhưng KHÔNG ném ra để ứng dụng vẫn có thể khởi động.
+            logger?.LogError(ex, "Error applying database migrations on startup (dev/staging). Please apply migrations manually if needed.");
+        }
     }
 }
 
@@ -114,9 +116,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-// Comment out HTTPS redirect for development
-// app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
 
