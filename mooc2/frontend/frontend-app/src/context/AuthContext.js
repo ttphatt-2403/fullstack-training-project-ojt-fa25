@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import apiClient from '../services/apiClient';
+import { buildApiUrl, API_ENDPOINTS } from '../services/apiConfig';
 
 const AuthContext = createContext()
 
@@ -23,7 +24,8 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUserProfile = async () => {
         try {
-            const response = await apiClient.get('http://localhost:5053/api/Auth/me');
+            // use API config builder to avoid hard-coded URLs
+            const response = await apiClient.get(buildApiUrl(API_ENDPOINTS.AUTH.ME));
             console.log('[AuthContext] /api/Auth/me response:', response.data);
             setUser(response.data);
             localStorage.setItem('user', JSON.stringify(response.data));

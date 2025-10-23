@@ -122,8 +122,6 @@ const AdminPage = () => {
   return (
     <div className="page-container">
       <div className="user-management" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-
-        {/* Header mới giống CategoryManagement */}
         <div className="page-header">
           <div className="header-content">
             <button 
