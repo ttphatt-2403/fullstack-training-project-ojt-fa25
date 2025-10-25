@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getAllBooks } from '../services/bookService';
-import { getAllCategories } from '../services/categoryService';
-import { getAllBorrows } from '../services/borrowService';
-import '../styles/LibraryDashboard.css';
+import { getAllBooks } from '../../services/bookService';
+import { getAllCategories } from '../../services/categoryService';
+import { getAllBorrows } from '../../services/borrowService';
+import '../../styles/LibraryDashboard.css';
 
 const LibraryDashboard = () => {
     const { user, logout } = useContext(AuthContext);
