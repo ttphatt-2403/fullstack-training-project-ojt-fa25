@@ -1,24 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import userService from "../services/userService";
-import UserTable from "../components/UserTable";
-import UserForm from "../components/UserForm";
-import "../styles/pages.css";
+import userService from "../../services/userService";
+import UserTable from "../../components/UserTable";
+import UserForm from "../../components/UserForm";
+import "../../styles/pages.css";
 
-const AdminPage = () => {
+const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch users from API
-  const fetchUsers = async () => {
+  // Fetch users from API with paging
+  const fetchUsers = async (page = pageNumber) => {
     try {
       setLoading(true);
-      const data = await userService.getAllUsers();
-      setUsers(data);
+      const result = await userService.getAllUsers(page, pageSize);
+      setUsers(result.data);
+      setTotalPages(result.totalPages);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -27,10 +32,48 @@ const AdminPage = () => {
     }
   };
 
-  // Load users on component mount
+  // Search chỉ gọi API khi nhấn Enter
+  const handleSearch = (e) => {
+    const keyword = e.target.value;
+    setSearchTerm(keyword);
+  };
+
+  const handleSearchKeyDown = async (e) => {
+    if (e.key === "Enter") {
+      if (searchTerm.trim() === "") {
+        fetchUsers(1);
+        setPageNumber(1);
+        return;
+      }
+      setLoading(true);
+      try {
+        const result = await userService.searchUsers(searchTerm);
+        setUsers(result);
+        setTotalPages(1);
+        setPageNumber(1);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Load users on component mount & khi pageNumber/pageSize thay đổi
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (searchTerm.trim() === "") {
+      fetchUsers(pageNumber);
+    }
+  }, [pageNumber, pageSize, searchTerm]);
+
+  // Không gọi API search khi searchTerm thay đổi nữa, chỉ gọi khi nhấn Enter
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPageNumber(newPage);
+    }
+  };
 
   // Handle Add New User
   const handleAddUser = () => {
@@ -149,7 +192,22 @@ const AdminPage = () => {
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
             onAddUser={handleAddUser}
+            searchTerm={searchTerm}
+            onSearch={handleSearch}
+            onSearchKeyDown={handleSearchKeyDown}
           />
+          {/* Pagination */}
+          <div className="pagination" style={{ marginTop: '16px', textAlign: 'center' }}>
+            <button onClick={() => handlePageChange(pageNumber - 1)} disabled={pageNumber === 1}>
+              ← Trang trước
+            </button>
+            <span style={{ margin: '0 12px' }}>
+              Trang {pageNumber} / {totalPages}
+            </span>
+            <button onClick={() => handlePageChange(pageNumber + 1)} disabled={pageNumber === totalPages}>
+              Trang sau →
+            </button>
+          </div>
         </div>
 
         {/* User Form Modal */}
@@ -209,4 +267,4 @@ const AdminPage = () => {
   );
 };
 
-export default AdminPage;
+export default UserManagement;

@@ -10,6 +10,31 @@ namespace BackendApi.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
+        // ...existing code...
+
+        // PATCH: api/Users/{id}
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchUser(int id, [FromBody] PatchUserRequest dto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+            }
+            // Chỉ cập nhật trường Isactive nếu có truyền lên
+            if (dto.Isactive.HasValue)
+            {
+                user.Isactive = dto.Isactive.Value;
+            }
+            user.Updatedat = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật thành công", isActive = user.Isactive });
+        }
+
+        public class PatchUserRequest
+        {
+            public bool? Isactive { get; set; }
+        }
 
         // GET: api/Users/search?keyword=abc
         [HttpGet("search")]

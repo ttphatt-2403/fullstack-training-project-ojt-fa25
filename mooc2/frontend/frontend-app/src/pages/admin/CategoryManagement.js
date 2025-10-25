@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
     getAllCategories,
     createCategory,
     updateCategory,
     deleteCategory
-} from '../services/categoryService';
-import '../styles/CategoryManagement.css';
+} from '../../services/categoryService';
+import '../../styles/CategoryManagement.css';
 
 const CategoryManagement = () => {
     const { user } = useContext(AuthContext);

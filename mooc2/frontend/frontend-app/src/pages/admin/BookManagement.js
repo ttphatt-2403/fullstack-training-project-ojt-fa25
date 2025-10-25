@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
     getAllBooks, 
@@ -8,9 +8,9 @@ import {
     createBook, 
     updateBook, 
     deleteBook 
-} from '../services/bookService';
-import { getAllCategories } from '../services/categoryService';
-import '../styles/BookManagement.css';
+} from '../../services/bookService';
+import { getAllCategories } from '../../services/categoryService';
+import '../../styles/BookManagement.css';
 
 const BookManagement = () => {
     const { user } = useContext(AuthContext);

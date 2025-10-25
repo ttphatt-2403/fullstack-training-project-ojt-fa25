@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
     getAllBorrows,
     createBorrow,
     returnBook,
     deleteBorrow
-} from '../services/borrowService';
-import userService from '../services/userService';
-import { getAllBooks } from '../services/bookService';
-import '../styles/BorrowManagement.css';
+} from '../../services/borrowService';
+import userService from '../../services/userService';
+import { getAllBooks } from '../../services/bookService';
+import '../../styles/BorrowManagement.css';
 
 const BorrowManagement = () => {
     const { user } = useContext(AuthContext);
@@ -46,7 +46,7 @@ const BorrowManagement = () => {
             ]);
 
             setBorrows(borrowsData);
-            setUsers(usersData);
+            setUsers(usersData && usersData.data ? usersData.data : []);
             setBooks(booksData.filter(book => book.availableCopies > 0)); // Chỉ hiện sách còn có sẵn
             setLoading(false);
         } catch (error) {

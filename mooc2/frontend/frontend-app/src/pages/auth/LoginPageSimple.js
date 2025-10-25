@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { login as loginService } from "../services/authService";
-import { useAuth } from "../context/AuthContext";
-import "../styles/pages.css";
+import { login as loginService } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
+import "../../styles/pages.css";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
