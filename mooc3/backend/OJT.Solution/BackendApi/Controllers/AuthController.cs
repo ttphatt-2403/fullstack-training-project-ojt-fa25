@@ -15,25 +15,27 @@ namespace BackendApi.Controllers
     public class AuthController : Controller
     {
         private readonly OjtDbContext _context;
+        private readonly IConfiguration _configuration; // THÊM
 
-        public AuthController(OjtDbContext context)
+        public AuthController(OjtDbContext context, IConfiguration configuration) // SỬA
         {
             _context = context;
+            _configuration = configuration;
         }
-
 
         private string GenerateJwtToken(User user)
         {
-            var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes("YourSuperSecretJwtKey1234567890!!"));
+            var secret = _configuration["Jwt:Key"]; // LẤY TỪ appsettings.json
+            var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.Username),
-        new Claim(ClaimTypes.Email, user.Email ?? ""),
-        new Claim(ClaimTypes.Role, user.Role)
-    };
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
 
             var token = new JwtSecurityToken(
                 claims: claims,
@@ -63,6 +65,11 @@ namespace BackendApi.Controllers
                 return Unauthorized("Sai username hoặc password.");
             }
 
+            if (!(user.Isactive ?? false))
+            {
+                return Unauthorized("Tài khoản đã bị khóa.");
+            }
+
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
             {
                 return Unauthorized("Sai username hoặc password.");
@@ -85,7 +92,6 @@ namespace BackendApi.Controllers
                 }
             });
         }
-
 
         //endpoint /me để lấy thông tin user hiện tại
         [HttpGet("me")]
@@ -112,10 +118,10 @@ namespace BackendApi.Controllers
                 user.Email,
                 user.Fullname,
                 user.Phone,
-                user.Role
+                user.Role,
+                user.Isactive
             });
         }
-
 
         // POST: api/Auth/register
         [HttpPost("register")]

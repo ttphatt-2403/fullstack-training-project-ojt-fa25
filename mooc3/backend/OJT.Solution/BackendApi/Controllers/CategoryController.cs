@@ -16,12 +16,22 @@ namespace BackendApi.Controllers
             _context = context;
         }
 
-        // GET: api/Category
+        // GET: api/Category?pageNumber=1&pageSize=10
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CategoryViewModel>>> GetCategories()
+        public async Task<ActionResult<object>> GetCategories([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var categories = await _context.Categories
-                .OrderBy(c => c.Name)
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _context.Categories
+                .OrderBy(c => c.Name);
+
+            var totalRecords = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+
+            var categories = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new CategoryViewModel
                 {
                     Id = c.Id,
@@ -30,7 +40,14 @@ namespace BackendApi.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(categories);
+            return Ok(new
+            {
+                data = categories,
+                pageNumber,
+                pageSize,
+                totalRecords,
+                totalPages
+            });
         }
 
         // GET: api/Category/5
@@ -138,6 +155,59 @@ namespace BackendApi.Controllers
                 Description = existingCategory.Description
             });
         }
+
+        // GET: api/Category/search?keyword=abc&pageNumber=1&pageSize=10
+        [HttpGet("search")]
+        public async Task<ActionResult<object>> SearchCategories(
+            [FromQuery] string keyword = "",
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            // Chuẩn hóa keyword để tránh lỗi null
+            keyword = keyword?.Trim().ToLower() ?? "";
+
+            // Query cơ bản
+            var query = _context.Categories.AsQueryable();
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                query = query.Where(c =>
+                    c.Name.ToLower().Contains(keyword) ||
+                    (c.Description != null && c.Description.ToLower().Contains(keyword))
+                );
+            }
+
+            // Đếm tổng số bản ghi
+            var totalRecords = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+
+            // Lấy dữ liệu có phân trang
+            var categories = await query
+                .OrderBy(c => c.Name)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(c => new CategoryViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description
+                })
+                .ToListAsync();
+
+            // Trả về kết quả
+            return Ok(new
+            {
+                data = categories,
+                pageNumber,
+                pageSize,
+                totalRecords,
+                totalPages
+            });
+        }
+
 
         // DELETE: api/Category/5
         [HttpDelete("{id}")]

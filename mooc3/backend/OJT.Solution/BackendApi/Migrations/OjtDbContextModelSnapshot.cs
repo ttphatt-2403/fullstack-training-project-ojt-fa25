@@ -203,6 +203,68 @@ namespace BackendApi.Migrations
                     b.ToTable("categories", (string)null);
                 });
 
+            modelBuilder.Entity("BackendApi.Models.Fee", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<int>("BorrowId")
+                        .HasColumnType("integer")
+                        .HasColumnName("borrowid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("createdat");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("paidat");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("paymentmethod");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status")
+                        .HasDefaultValueSql("'unpaid'::character varying");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("type");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("userid");
+
+                    b.HasKey("Id")
+                        .HasName("fees_pkey");
+
+                    b.HasIndex("BorrowId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("fees", (string)null);
+                });
+
             modelBuilder.Entity("BackendApi.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -318,9 +380,35 @@ namespace BackendApi.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BackendApi.Models.Fee", b =>
+                {
+                    b.HasOne("BackendApi.Models.Borrow", "Borrow")
+                        .WithMany("Fees")
+                        .HasForeignKey("BorrowId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_fees_borrow");
+
+                    b.HasOne("BackendApi.Models.User", "User")
+                        .WithMany("Fees")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_fees_user");
+
+                    b.Navigation("Borrow");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BackendApi.Models.Book", b =>
                 {
                     b.Navigation("Borrows");
+                });
+
+            modelBuilder.Entity("BackendApi.Models.Borrow", b =>
+                {
+                    b.Navigation("Fees");
                 });
 
             modelBuilder.Entity("BackendApi.Models.Category", b =>
@@ -331,6 +419,8 @@ namespace BackendApi.Migrations
             modelBuilder.Entity("BackendApi.Models.User", b =>
                 {
                     b.Navigation("Borrows");
+
+                    b.Navigation("Fees");
                 });
 #pragma warning restore 612, 618
         }

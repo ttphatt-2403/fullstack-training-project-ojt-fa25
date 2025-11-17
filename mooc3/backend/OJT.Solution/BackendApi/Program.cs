@@ -1,4 +1,5 @@
 ﻿using BackendApi.Models;
+using BackendApi.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
-// JWT Configuration
-var key = Encoding.ASCII.GetBytes("YourSuperSecretJwtKey1234567890!!");
+// Lấy secret key từ appsettings.json
+var jwtKey = builder.Configuration["Jwt:Key"];
+var key = Encoding.ASCII.GetBytes(jwtKey); // Cấu hình key duy nhất ở đây!
 
 builder.Services.AddAuthentication(options =>
 {
@@ -43,18 +45,15 @@ builder.Services.AddCors(options =>
                       });
 });
 
-
-// Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
-// Đăng kí DBContext với PostgreSQL
+
 builder.Services.AddDbContext<OjtDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Swagger for API documentation
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
@@ -88,9 +87,11 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// Đăng ký Background Service cho auto sync book quantities
+builder.Services.AddHostedService<BookQuantitySyncService>();
+
 var app = builder.Build();
 
-// Áp dụng migration tự động CHỈ cho Development hoặc Staging (an toàn cho người mới học)
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     using (var scope = app.Services.CreateScope())
@@ -104,13 +105,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
         }
         catch (Exception ex)
         {
-            // Ghi log lỗi nhưng KHÔNG ném ra để ứng dụng vẫn có thể khởi động.
             logger?.LogError(ex, "Error applying database migrations on startup (dev/staging). Please apply migrations manually if needed.");
         }
     }
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -120,7 +119,6 @@ if (app.Environment.IsDevelopment())
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();

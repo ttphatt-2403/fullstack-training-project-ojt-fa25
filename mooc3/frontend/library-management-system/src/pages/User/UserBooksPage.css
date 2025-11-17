@@ -1,0 +1,458 @@
+/* UserBooksPage.css */
+
+.user-books-page {
+  background: #f0f2f5;
+  min-height: 100vh;
+}
+
+/* Hero Section Styling */
+.hero-section {
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  padding: 60px 24px;
+  margin-bottom: 0;
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.search-section {
+  margin-top: 32px;
+}
+
+.search-section .ant-input-affix-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-section .ant-select {
+  border-radius: 8px !important;
+}
+
+.search-section .ant-select-selector {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-section .ant-btn {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  height: 40px;
+  font-weight: 600;
+}
+
+/* Category Tabs with Scroll Buttons */
+.category-section {
+  position: relative;
+}
+
+.category-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.category-tabs {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scroll-behavior: smooth;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none; /* Hide scrollbar but keep functionality */
+}
+
+.scroll-button {
+  position: absolute;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #d9d9d9 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.scroll-button:hover {
+  background: rgba(24, 144, 255, 0.1);
+  border-color: #1890ff !important;
+  color: #1890ff;
+  transform: scale(1.1);
+}
+
+.scroll-left {
+  left: -16px;
+}
+
+.scroll-right {
+  right: -16px;
+}
+
+.category-tabs-container {
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px; /* Add horizontal padding for button space */
+  min-width: max-content;
+  align-items: center;
+}
+
+.category-tab {
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: max-content;
+  flex-shrink: 0; /* Prevent shrinking */
+  user-select: none;
+}
+
+.category-tab:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.category-tab.active {
+  background: #1890ff;
+  border-color: #1890ff;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.category-count {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Book Card Styling */
+.book-card {
+  border-radius: 12px !important;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  border-color: #1890ff;
+}
+
+.book-card.featured {
+  border: 2px solid #ffd700;
+  position: relative;
+}
+
+.book-card.featured::before {
+  content: "⭐ Nổi bật";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ffd700;
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 2;
+}
+
+/* Book Cover Styling */
+.book-cover {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.book-cover-placeholder {
+  height: 200px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #90caf9;
+}
+
+.book-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.book-card:hover .book-cover img {
+  transform: scale(1.05);
+}
+
+/* Card Content */
+.book-card .ant-card-body {
+  padding: 16px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-card .ant-card-meta {
+  flex-grow: 1;
+}
+
+.book-card .ant-card-meta-title {
+  margin-bottom: 8px !important;
+}
+
+.book-card .ant-card-meta-description {
+  color: #666 !important;
+}
+
+/* Card Actions */
+.book-card .ant-card-actions {
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.book-card .ant-card-actions > li {
+  margin: 4px 0 !important;
+}
+
+.book-card .ant-card-actions .ant-btn {
+  border: none;
+  box-shadow: none;
+  font-size: 12px;
+  height: auto;
+  padding: 4px 8px;
+}
+
+/* Rating Stars */
+.ant-rate {
+  font-size: 14px !important;
+}
+
+.ant-rate-star {
+  margin-right: 2px !important;
+}
+
+/* Tags */
+.ant-tag {
+  border-radius: 12px;
+  font-size: 11px;
+  padding: 2px 8px;
+  margin-top: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 40px 16px;
+  }
+  
+  .hero-content h1 {
+    font-size: 24px !important;
+  }
+  
+  .search-section .ant-col {
+    margin-bottom: 8px;
+  }
+  
+  .category-tabs {
+    margin: 0 -16px; /* Allow full width scroll */
+    padding: 0 16px;
+  }
+  
+  .category-tabs-wrapper {
+    margin: 0 16px; /* Space for scroll buttons */
+  }
+  
+  .scroll-button {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .scroll-left {
+    left: -8px;
+  }
+  
+  .scroll-right {
+    right: -8px;
+  }
+  
+  .category-tabs-container {
+    gap: 8px;
+    padding: 8px 8px;
+  }
+  
+  .category-tab {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: auto;
+    flex-shrink: 0;
+  }
+  
+  .category-count {
+    font-size: 10px;
+  }
+  
+  .book-card .ant-card-body {
+    padding: 12px;
+  }
+  
+  .book-cover,
+  .book-cover-placeholder {
+    height: 160px;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-section {
+    padding: 32px 12px;
+  }
+  
+  .hero-content h1 {
+    font-size: 20px !important;
+  }
+  
+  .hero-content p {
+    font-size: 14px !important;
+  }
+  
+  .category-tabs {
+    margin: 0 -12px;
+    padding: 0 12px;
+  }
+  
+  .category-tabs-wrapper {
+    margin: 0 12px;
+  }
+  
+  .scroll-button {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+  
+  .scroll-left {
+    left: -4px;
+  }
+  
+  .scroll-right {
+    right: -4px;
+  }
+  
+  .category-tab {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 16px;
+  }
+  
+  .book-cover,
+  .book-cover-placeholder {
+    height: 140px;
+  }
+  
+  .book-card .ant-card-meta-title {
+    font-size: 12px;
+  }
+  
+  .book-card .ant-card-meta-description {
+    font-size: 11px;
+  }
+}
+
+/* Loading Animation */
+.ant-spin-container {
+  min-height: 200px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #999;
+}
+
+.empty-state .anticon {
+  font-size: 48px;
+  color: #d9d9d9;
+  margin-bottom: 16px;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.book-card {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Borrow Button */
+.book-card .borrow-btn {
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.book-card .borrow-btn:hover {
+  background: linear-gradient(135deg, #0c7cd5 0%, #2e9df0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+}
+
+/* Search Section Responsive */
+@media (max-width: 992px) {
+  .search-section .ant-btn {
+    margin-top: 8px;
+  }
+}
+
+/* Scrollbar Styling */
+.category-tabs {
+  padding-bottom: 8px;
+}
+
+.category-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.category-tabs::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.category-tabs::-webkit-scrollbar-thumb {
+  background: #1890ff;
+  border-radius: 2px;
+}
+
+.category-tabs::-webkit-scrollbar-thumb:hover {
+  background: #0c7cd5;
+}

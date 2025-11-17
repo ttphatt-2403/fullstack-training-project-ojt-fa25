@@ -21,6 +21,8 @@ public partial class OjtDbContext : DbContext
 
     public virtual DbSet<Book> Books { get; set; }
 
+    public virtual DbSet<Fee> Fees { get; set; }
+
     public virtual DbSet<Borrow> Borrows { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -141,6 +143,36 @@ public partial class OjtDbContext : DbContext
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_books_category");
+        });
+
+        // Cấu hình cho Fee entity
+        modelBuilder.Entity<Fee>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("fees_pkey");
+            entity.ToTable("fees");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.BorrowId).HasColumnName("borrowid");
+            entity.Property(e => e.UserId).HasColumnName("userid");
+            entity.Property(e => e.Amount).HasColumnName("amount");
+            entity.Property(e => e.Type).HasMaxLength(50).HasColumnName("type");
+            entity.Property(e => e.Status).HasMaxLength(20).HasDefaultValueSql("'unpaid'::character varying").HasColumnName("status");
+            entity.Property(e => e.PaymentMethod).HasMaxLength(30).HasColumnName("paymentmethod");
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone").HasColumnName("createdat");
+            entity.Property(e => e.PaidAt).HasColumnType("timestamp without time zone").HasColumnName("paidat");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+
+            entity.HasOne(d => d.Borrow)
+                .WithMany(p => p.Fees)
+                .HasForeignKey(d => d.BorrowId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_fees_borrow");
+
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.Fees)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_fees_user");
         });
 
         // Cấu hình cho Borrow entity

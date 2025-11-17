@@ -1,8 +1,10 @@
+using BackendApi.Dtos;
+using BackendApi.Models;
+using BCrypt.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BackendApi.Models;
-using BackendApi.Dtos;
-using BCrypt.Net;
+using System.Globalization;
+using System.Text;
 
 namespace BackendApi.Controllers
 {
@@ -36,7 +38,7 @@ namespace BackendApi.Controllers
             public bool? Isactive { get; set; }
         }
 
-        // GET: api/Users/search?keyword=abc
+
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<UserResponse>>> SearchUsers([FromQuery] string keyword)
         {
@@ -45,29 +47,42 @@ namespace BackendApi.Controllers
                 return BadRequest("Keyword is required.");
             }
 
-            var users = await _context.Users
-                .Where(u =>
-                    u.Fullname.Contains(keyword) ||
-                    u.Username.Contains(keyword) ||
-                    u.Email.Contains(keyword)
-                )
-                .Select(u => new UserResponse
+            // Hàm xóa dấu tiếng Việt, viết luôn trong action
+            string RemoveDiacritics(string text)
+            {
+                var normalized = text.Normalize(NormalizationForm.FormD);
+                var sb = new StringBuilder();
+                foreach (var c in normalized)
                 {
-                    Id = u.Id,
-                    Username = u.Username,
-                    Email = u.Email,
-                    Fullname = u.Fullname,
-                    Phone = u.Phone,
-                    Avatarurl = u.Avatarurl,
-                    Dateofbirth = u.Dateofbirth,
-                    Role = u.Role,
-                    Isactive = u.Isactive,
-                    Createdat = u.Createdat,
-                    Updatedat = u.Updatedat
-                })
-                .ToListAsync();
+                    if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                        sb.Append(c);
+                }
+                return sb.ToString().Normalize(NormalizationForm.FormC).ToLower();
+            }
 
-            return Ok(users);
+            var keywordNorm = RemoveDiacritics(keyword);
+
+            var allUsers = await _context.Users.ToListAsync();
+            var filtered = allUsers.Where(u =>
+                RemoveDiacritics(u.Fullname ?? "").Contains(keywordNorm) ||
+                RemoveDiacritics(u.Username ?? "").Contains(keywordNorm) ||
+                RemoveDiacritics(u.Email ?? "").Contains(keywordNorm)
+            ).Select(u => new UserResponse
+            {
+                Id = u.Id,
+                Username = u.Username,
+                Email = u.Email,
+                Fullname = u.Fullname,
+                Phone = u.Phone,
+                Avatarurl = u.Avatarurl,
+                Dateofbirth = u.Dateofbirth,
+                Role = u.Role,
+                Isactive = u.Isactive,
+                Createdat = u.Createdat,
+                Updatedat = u.Updatedat
+            }).ToList();
+
+            return Ok(filtered);
         }
         private readonly OjtDbContext _context;
 

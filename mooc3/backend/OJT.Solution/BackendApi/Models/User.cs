@@ -31,4 +31,7 @@ public partial class User
 
     // Navigation property: Một user có thể có nhiều phiếu mượn
     public virtual ICollection<Borrow> Borrows { get; set; } = new List<Borrow>();
+
+    // Fees associated with this user
+    public virtual ICollection<Fee> Fees { get; set; } = new List<Fee>();
 }
