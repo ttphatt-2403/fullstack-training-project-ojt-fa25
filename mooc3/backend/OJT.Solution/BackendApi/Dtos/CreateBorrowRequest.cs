@@ -17,5 +17,7 @@ namespace BackendApi.Dtos
 
         [StringLength(500)]
         public string? Notes { get; set; }
+
+        public decimal? Fee { get; set; } = 20000; // Default borrow fee
     }
 }

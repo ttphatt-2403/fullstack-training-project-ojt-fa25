@@ -1,0 +1,11 @@
+/* Nếu vẫn thích căn width cho toàn bộ App */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Nếu vẫn dùng class "card" ở đâu đó */
+.card {
+  padding: 2em;
+}

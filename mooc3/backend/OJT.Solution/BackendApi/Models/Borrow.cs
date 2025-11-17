@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -25,7 +26,7 @@ public partial class Borrow
     public DateTime? ReturnDate { get; set; }
 
     [StringLength(20)]
-    public string Status { get; set; } = "borrowed"; // borrowed, returned, overdue
+    public string Status { get; set; } = "request"; // request, borrowed, returned, overdue, rejected
 
     [StringLength(500)]
     public string? Notes { get; set; }
@@ -40,4 +41,7 @@ public partial class Borrow
 
     [ForeignKey("BookId")]
     public virtual Book Book { get; set; } = null!;
+    
+    // Fees associated with this borrow (one borrow can have multiple fees)
+    public virtual ICollection<Fee> Fees { get; set; } = new List<Fee>();
 }
