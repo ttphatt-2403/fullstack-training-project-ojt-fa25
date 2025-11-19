@@ -1,4 +1,5 @@
-import { Table, Button, Modal, Form, InputNumber, message, Tag, Drawer, Descriptions, Space, Badge } from 'antd';
+import { Table, Button, Modal, Form, InputNumber, Input, message, Tag, Drawer, Descriptions, Space, Badge } from 'antd';'antd';
+import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { bookService } from "../../services/bookService";
 import dayjs from 'dayjs';
@@ -8,6 +9,10 @@ function StaffBookInventory() {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   
   // State for borrow details drawer
   const [borrowsDrawerOpen, setBorrowsDrawerOpen] = useState(false);
@@ -20,7 +25,7 @@ function StaffBookInventory() {
 
   // Load books when component mounts
   useEffect(() => {
-    fetchBooks(1, pagination.pageSize);
+    fetchBooks(1, pagination.pageSize, '');
   }, []);
 
   // Populate form when modal opens
@@ -32,10 +37,20 @@ function StaffBookInventory() {
     });
   }, [modalOpen, selectedBook, form]);
 
-  const fetchBooks = async (page = 1, pageSize = 10) => {
+  const fetchBooks = async (page = 1, pageSize = 10, query = '') => {
     setLoading(true);
     try {
-      const data = await bookService.getBooks({ page, pageSize });
+      let data;
+      if (query.trim()) {
+        // Use search API if query exists
+        setIsSearching(true);
+        data = await bookService.searchBooks({ query: query.trim(), page, pageSize });
+      } else {
+        // Use regular getBooks API
+        setIsSearching(false);
+        data = await bookService.getBooks({ page, pageSize });
+      }
+      
       setBooks(data.items || []);
       setPagination({ 
         current: data.pageNumber || page, 
@@ -61,12 +76,24 @@ function StaffBookInventory() {
       setModalOpen(false);
       setSelectedBook(null);
       form.resetFields();
-      fetchBooks(pagination.current, pagination.pageSize);
+      fetchBooks(pagination.current, pagination.pageSize, searchQuery);
     } catch (error) {
       console.error('Update quantity error:', error);
       const errorMsg = error?.response?.data?.message || error?.message || "Có lỗi xảy ra khi cập nhật số lượng!";
       message.error(errorMsg);
     }
+  };
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+    setPagination(prev => ({ ...prev, current: 1 }));
+    fetchBooks(1, pagination.pageSize, value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setPagination(prev => ({ ...prev, current: 1 }));
+    fetchBooks(1, pagination.pageSize, '');
   };
 
   const openQuantityModal = (book) => {
@@ -188,7 +215,41 @@ function StaffBookInventory() {
   return (
     <div style={{ padding: '16px' }}>
       <div style={{ marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Quản lý số lượng sách</h2>
+        <h2 style={{ margin: 0, marginBottom: 16 }}>Quản lý số lượng sách</h2>
+        
+        {/* Search Bar */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+            <Input.Search
+              placeholder="Tìm kiếm sách (không phân biệt hoa/thường): tên sách, tác giả, ISBN, thể loại..."
+              style={{ maxWidth: '500px', flex: 1 }}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={handleSearch}
+              enterButton="Tìm kiếm"
+              loading={loading}
+              allowClear
+              size="large"
+            />
+            {isSearching && (
+              <Button 
+                icon={<ClearOutlined />} 
+                onClick={handleClearSearch}
+                title="Xóa bộ lọc tìm kiếm"
+                size="large"
+              >
+                Hiển thị tất cả
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {isSearching && (
+          <div style={{ marginBottom: 8, color: '#666' }}>
+            <SearchOutlined /> Kết quả tìm kiếm cho: "<strong>{searchQuery}</strong>" 
+            ({pagination.total} kết quả)
+          </div>
+        )}
       </div>
 
       <Table
@@ -204,7 +265,7 @@ function StaffBookInventory() {
         }}
         onChange={(pag) => {
           setPagination(pag);
-          fetchBooks(pag.current, pag.pageSize);
+          fetchBooks(pag.current, pag.pageSize, searchQuery);
         }}
         scroll={{ y: 'calc(100vh - 300px)' }}
       />

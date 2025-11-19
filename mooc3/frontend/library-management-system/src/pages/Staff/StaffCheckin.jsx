@@ -27,6 +27,7 @@ import dayjs from 'dayjs';
 import { borrowService } from '../../services/borrowService';
 import { userService } from '../../services/userService';
 import { bookService } from '../../services/bookService';
+import { authService } from '../../services/authService';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -77,6 +78,9 @@ const StaffCheckin = () => {
   const loadUsers = async () => {
     try {
       const response = await userService.getAllUsers({ pageSize: 1000 });
+      console.log('Users response:', response);
+      console.log('Users items:', response.items);
+      console.log('First user:', response.items?.[0]);
       setUsers(response.items || []);
     } catch (error) {
       console.error('Load users error:', error);
@@ -87,8 +91,18 @@ const StaffCheckin = () => {
   const loadBooks = async () => {
     try {
       const response = await bookService.getBooks({ pageSize: 1000 });
-      const availableBooks = (response.items || []).filter(book => (book.availableCopies || 0) > 0);
+      console.log('Books service response:', response);
+      console.log('Books items:', response.items);
+      console.log('First book:', response.items?.[0]);
+      
+      // Use normalized books from service
+      const availableBooks = (response.items || []).filter(book => 
+        (book.availableCopies > 0) || (book.totalCopies > 0)
+      );
+      
       setBooks(availableBooks);
+      console.log('Available books count:', availableBooks.length);
+      console.log('All books count:', response.items?.length);
     } catch (error) {
       console.error('Load books error:', error);
     }
@@ -118,7 +132,14 @@ const StaffCheckin = () => {
   const loadRecentBorrows = async () => {
     try {
       const response = await borrowService.getActiveBorrows({ pageNumber: 1, pageSize: 5 });
-      setRecentBorrows(response.data || []);
+      console.log('Recent borrows response:', response);
+      console.log('Recent borrows data:', response.data);
+      console.log('Recent borrows items:', response.items);
+      
+      // Try different response structures
+      const borrowsData = response.data || response.items || response || [];
+      setRecentBorrows(borrowsData);
+      console.log('Set recent borrows:', borrowsData);
     } catch (error) {
       console.error('Load recent borrows error:', error);
     }
@@ -128,6 +149,28 @@ const StaffCheckin = () => {
   const handleCheckin = async (values) => {
     try {
       setLoading(true);
+      
+      // 🔍 Debug user authentication và role
+      const currentUser = authService.getCurrentUser();
+      const token = localStorage.getItem('token');
+      
+      console.log('🔐 Current user:', currentUser);
+      console.log('🎭 User role:', currentUser?.role);
+      console.log('🔑 Token exists:', !!token);
+      
+      if (!token) {
+        message.error('Bạn chưa đăng nhập! Vui lòng đăng nhập lại.');
+        return;
+      }
+      
+      if (!authService.hasAnyRole(['Staff', 'Admin'])) {
+        console.error('🚫 Access denied. User role:', currentUser?.role, 'Required:', ['Staff', 'Admin']);
+        message.error(`Bạn không có quyền thực hiện chức năng này! Role hiện tại: ${currentUser?.role}`);
+        return;
+      }
+      
+      console.log('✅ Role check passed. User role:', currentUser?.role);
+      
       const borrowData = {
         userId: parseInt(values.userId),
         bookId: parseInt(values.bookId),
@@ -135,7 +178,7 @@ const StaffCheckin = () => {
         notes: values.notes
       };
 
-      await borrowService.createBorrow(borrowData);
+      await borrowService.staffCreateBorrow(borrowData);
       message.success('Cho mượn sách thành công!');
       checkinForm.resetFields();
 
@@ -167,24 +210,24 @@ const StaffCheckin = () => {
   const recentBorrowColumns = [
     {
       title: 'Người mượn',
-      dataIndex: 'user',
-      render: (user) => (
+      dataIndex: 'userName',
+      render: (userName, record) => (
         <div>
-          <Text strong>{user?.fullname || user?.username}</Text>
+          <Text strong>{userName || record.user?.fullname || record.user?.username || 'N/A'}</Text>
           <br />
-          <Text type="secondary" style={{ fontSize: '12px' }}>{user?.email}</Text>
+          <Text type="secondary" style={{ fontSize: '12px' }}>ID: {record.userId || record.user?.id}</Text>
         </div>
       ),
       width: '30%'
     },
     {
       title: 'Sách',
-      dataIndex: 'book',
-      render: (book) => (
+      dataIndex: 'bookTitle',
+      render: (bookTitle, record) => (
         <div>
-          <Text strong>{book?.title}</Text>
+          <Text strong>{bookTitle || record.book?.title || 'N/A'}</Text>
           <br />
-          <Text type="secondary" style={{ fontSize: '12px' }}>{book?.author}</Text>
+          <Text type="secondary" style={{ fontSize: '12px' }}>ID: {record.bookId || record.book?.id}</Text>
         </div>
       ),
       width: '35%'
@@ -295,19 +338,21 @@ const StaffCheckin = () => {
                     <Select
                       placeholder="Tìm kiếm theo ID, tên hoặc email"
                       showSearch
-                      optionFilterProp="children"
-                      filterOption={(input, option) =>
-                        option.children.toLowerCase().includes(input.toLowerCase())
-                      }
+                      filterOption={(input, option) => {
+                        const user = users.find(u => (u.id || u.Id) === option.value);
+                        if (!user) return false;
+                        const searchText = `${user.id || user.Id} ${user.fullName || user.Fullname || user.username || user.Username} ${user.email || user.Email}`;
+                        return searchText.toLowerCase().includes(input.toLowerCase());
+                      }}
                       style={{ width: '100%' }}
                     >
                       {users.map(user => (
-                        <Option key={user.id} value={user.id}>
+                        <Option key={user.id || user.Id} value={user.id || user.Id}>
                           <div>
-                            <strong>#{user.id}</strong> - {user.fullname || user.username}
+                            <strong>#{user.id || user.Id}</strong> - {user.fullName || user.Fullname || user.username || user.Username}
                             <br />
                             <Text type="secondary" style={{ fontSize: '12px' }}>
-                              {user.email}
+                              {user.email || user.Email}
                             </Text>
                           </div>
                         </Option>
@@ -325,19 +370,21 @@ const StaffCheckin = () => {
                     <Select
                       placeholder="Tìm kiếm theo ID hoặc tên sách"
                       showSearch
-                      optionFilterProp="children"
-                      filterOption={(input, option) =>
-                        option.children.toLowerCase().includes(input.toLowerCase())
-                      }
+                      filterOption={(input, option) => {
+                        const book = books.find(b => (b.id || b.Id) === option.value);
+                        if (!book) return false;
+                        const searchText = `${book.id || book.Id} ${book.title || book.Title} ${book.author || book.Author}`;
+                        return searchText.toLowerCase().includes(input.toLowerCase());
+                      }}
                       style={{ width: '100%' }}
                     >
                       {books.map(book => (
-                        <Option key={book.id} value={book.id}>
+                        <Option key={book.id || book.Id} value={book.id || book.Id}>
                           <div>
-                            <strong>#{book.id}</strong> - {book.title}
+                            <strong>#{book.id || book.Id}</strong> - {book.title || book.Title}
                             <br />
                             <Text type="secondary" style={{ fontSize: '12px' }}>
-                              {book.author} - Còn: {book.availableCopies} cuốn
+                              {book.author || book.Author} - Có sẵn: {book.availableCopies || book.AvailableCopies || book.totalCopies || book.TotalCopies || 'N/A'}
                             </Text>
                           </div>
                         </Option>

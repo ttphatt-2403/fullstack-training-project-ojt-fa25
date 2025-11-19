@@ -119,7 +119,11 @@ namespace BackendApi.Controllers
                 user.Fullname,
                 user.Phone,
                 user.Role,
-                user.Isactive
+                user.Isactive,
+                user.Createdat,
+                user.Updatedat,
+                user.Dateofbirth,
+                user.Avatarurl
             });
         }
 

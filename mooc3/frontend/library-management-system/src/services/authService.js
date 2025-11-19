@@ -1,5 +1,37 @@
 import api from './api';
 
+// Helper function để decode JWT token
+const decodeJwtToken = (token) => {
+  try {
+    if (!token || typeof token !== 'string') return null;
+    
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    
+    const payload = JSON.parse(atob(parts[1]));
+    
+    // Chuẩn hóa các claim thành format dễ sử dụng
+    const normalized = {
+      userId: payload.nameid || payload.sub || payload.userId,
+      username: payload.unique_name || payload.name || payload.username,
+      email: payload.email,
+      role: payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
+      exp: payload.exp,
+      iat: payload.iat
+    };
+    
+    console.log('🔍 Decoded JWT:', {
+      raw: payload,
+      normalized
+    });
+    
+    return normalized;
+  } catch (error) {
+    console.error('❌ Failed to decode JWT token:', error);
+    return null;
+  }
+};
+
 export const authService = {
   // POST /api/auth/login - Đăng nhập
   login: async (username, password) => {
@@ -98,9 +130,52 @@ export const authService = {
     return !!localStorage.getItem('token');
   },
 
-  // Lấy user từ localStorage
+  // Lấy user từ localStorage hoặc decode từ JWT
   getCurrentUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
-  }
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    if (!token) return null;
+    
+    // Nếu có user trong localStorage, dùng đó trước
+    if (userStr) {
+      try {
+        const stored = JSON.parse(userStr);
+        console.log('👤 User from localStorage:', stored);
+        return stored;
+      } catch (e) {
+        console.warn('⚠️ Invalid user JSON in localStorage');
+      }
+    }
+    
+    // Nếu không có, decode từ JWT token
+    const decoded = decodeJwtToken(token);
+    if (decoded) {
+      console.log('🔓 User from JWT token:', decoded);
+      return {
+        id: decoded.userId,
+        username: decoded.username,
+        email: decoded.email,
+        role: decoded.role
+      };
+    }
+    
+    return null;
+  },
+
+  // Kiểm tra user có role cụ thể không (case-insensitive)
+  hasRole: (requiredRole) => {
+    const user = authService.getCurrentUser();
+    return user?.role?.toLowerCase() === requiredRole?.toLowerCase();
+  },
+
+  // Kiểm tra user có một trong các role không (case-insensitive)
+  hasAnyRole: (roles) => {
+    const user = authService.getCurrentUser();
+    const userRole = user?.role?.toLowerCase();
+    return roles.some(role => role.toLowerCase() === userRole);
+  },
+
+  // Export helper function
+  decodeJwtToken
 };

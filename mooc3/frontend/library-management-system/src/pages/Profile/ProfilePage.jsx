@@ -136,47 +136,59 @@ function ProfilePage() {
       <Row gutter={24}>
         {/* Left Column - Avatar & System Info */}
         <Col span={8}>
-          <Card title="Ảnh đại diện" style={{ marginBottom: '24px' }}>
+          <Card title="Ảnh đại diện" loading={loading && !userInfo} style={{ marginBottom: '24px' }}>
             <div style={{ textAlign: 'center' }}>
               <Avatar
                 size={120}
-                src={userInfo.avatarurl}
+                src={userInfo?.avatarurl}
                 icon={<UserOutlined />}
-                style={{ marginBottom: '16px' }}
+                style={{ 
+                  marginBottom: '16px',
+                  backgroundColor: !userInfo?.avatarurl ? '#1890ff' : undefined,
+                  border: '3px solid #f0f0f0'
+                }}
               />
-              <br />
-              <Upload
-                beforeUpload={handleAvatarUpload}
-                showUploadList={false}
-                accept="image/*"
-              >
-                <Button icon={<UploadOutlined />} loading={uploading}>
-                  Thay đổi ảnh
-                </Button>
-              </Upload>
+              {userInfo && (
+                <>
+                  <br />
+                  <Text type="secondary" style={{ display: 'block', marginBottom: '8px' }}>
+                    {userInfo.fullname || userInfo.username}
+                  </Text>
+                  <Upload
+                    beforeUpload={handleAvatarUpload}
+                    showUploadList={false}
+                    accept="image/*"
+                  >
+                    <Button icon={<UploadOutlined />} loading={uploading} size="small">
+                      Thay đổi ảnh
+                    </Button>
+                  </Upload>
+                </>
+              )}
             </div>
           </Card>
 
-          <Card title="Thông tin hệ thống" style={{ marginBottom: '24px' }}>
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <div>
-                <Text strong>
-                  <CrownOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                  Vai trò:
-                </Text>
-                <Tag 
-                  color={
-                    userInfo.role === 'admin' ? 'red' :
-                    userInfo.role === 'staff' ? 'blue' : 'green'
-                  }
-                  style={{ marginLeft: '8px' }}
-                >
-                  {userInfo.role?.toUpperCase()}
-                </Tag>
-              </div>
-              
-              <div>
-                <Text strong>
+          <Card title="Thông tin hệ thống" loading={loading && !userInfo} style={{ marginBottom: '24px' }}>
+            {userInfo && (
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div>
+                  <Text strong>
+                    <CrownOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                    Vai trò:
+                  </Text>
+                  <Tag 
+                    color={
+                      userInfo.role === 'admin' ? 'red' :
+                      userInfo.role === 'staff' ? 'blue' : 'green'
+                    }
+                    style={{ marginLeft: '8px' }}
+                  >
+                    {userInfo.role?.toUpperCase()}
+                  </Tag>
+                </div>
+                
+                <div>
+                  <Text strong>
                   <CheckCircleOutlined style={{ marginRight: '8px', color: userInfo.isactive ? '#52c41a' : '#f5222d' }} />
                   Trạng thái:
                 </Text>
@@ -196,40 +208,44 @@ function ProfilePage() {
                 </Text>
               </div>
             </Space>
+            )}
           </Card>
         </Col>
 
         {/* Right Column - Main Profile Form */}
         <Col span={16}>
           <Card
+            loading={loading && !userInfo}
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Title level={4} style={{ margin: 0 }}>
                   <UserOutlined style={{ marginRight: '8px' }} />
                   Thông tin chi tiết
                 </Title>
-                {!editing ? (
-                  <Button
-                    type="primary"
-                    icon={<EditOutlined />}
-                    onClick={() => setEditing(true)}
-                  >
-                    Chỉnh sửa
-                  </Button>
-                ) : (
-                  <Space>
-                    <Button onClick={handleCancel}>
-                      Hủy
-                    </Button>
+                {userInfo && (
+                  !editing ? (
                     <Button
                       type="primary"
-                      icon={<SaveOutlined />}
-                      loading={loading}
-                      onClick={() => form.submit()}
+                      icon={<EditOutlined />}
+                      onClick={() => setEditing(true)}
                     >
-                      Lưu thay đổi
+                      Chỉnh sửa
                     </Button>
-                  </Space>
+                  ) : (
+                    <Space>
+                      <Button onClick={handleCancel}>
+                        Hủy
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<SaveOutlined />}
+                        loading={loading}
+                        onClick={() => form.submit()}
+                      >
+                        Lưu thay đổi
+                      </Button>
+                    </Space>
+                  )
                 )}
               </div>
             }

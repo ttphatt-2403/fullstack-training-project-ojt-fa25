@@ -7,6 +7,8 @@ import AdminPage from './pages/Admin/AdminPage';
 import UserManagement from './pages/Admin/UserManagement';
 import AdminBookPage from './pages/Admin/AdminBookPage';
 import AdminCategoryPage from './pages/Admin/AdminCategoryPage';
+import AdminBorrowManagement from './pages/Admin/AdminBorrowManagement';
+import AdminFeeManagement from './pages/Admin/AdminFeeManagement';
 
 import StaffPage from './pages/Staff/StaffPage';
 import StaffBookInventory from './pages/Staff/StaffBookInventory';
@@ -69,6 +71,8 @@ function App() {
           <Route path="users" element={<UserManagement />} />
           <Route path="books" element={<AdminBookPage />} />
           <Route path="categories" element={<AdminCategoryPage />} />
+          <Route path="borrows" element={<AdminBorrowManagement />} />
+          <Route path="fees" element={<AdminFeeManagement />} />
         </Route>
 
         {/* Staff (layout+outlet) */}
