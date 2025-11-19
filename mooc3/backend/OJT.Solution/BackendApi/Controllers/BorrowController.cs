@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using BackendApi.Models;
 using BackendApi.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BackendApi.Controllers
 {
@@ -427,10 +428,11 @@ namespace BackendApi.Controllers
         }
 
         // ==========================================
-        // POST: api/Borrow
-        // ==========================================
-        [HttpPost]
-        public async Task<ActionResult<object>> CreateBorrow([FromBody] CreateBorrowRequest dto)
+        // POST: api/Borrow/request
+        // ========================================== 
+        // API cho USER tạo yêu cầu mượn (status = "request")
+        [HttpPost("request")]
+        public async Task<ActionResult<object>> CreateBorrowRequest([FromBody] CreateBorrowRequest dto)
         {
             if (dto == null) return BadRequest("Request body is null");
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -495,6 +497,80 @@ namespace BackendApi.Controllers
                 borrow.DueDate,
                 borrow.Status,
                 borrow.Createdat
+            });
+        }
+
+        // POST: api/Borrow/staff-checkin
+        // ========================================== 
+        // API cho STAFF tạo phiếu mượn trực tiếp (status = "borrowed")
+        [HttpPost("staff-checkin")]
+        [Authorize(Roles = "Staff,Admin,staff,admin")] // Support both cases
+        public async Task<ActionResult<object>> StaffCreateBorrow([FromBody] CreateBorrowRequest dto)
+        {
+            if (dto == null) return BadRequest("Request body is null");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userExists = await _context.Users.AnyAsync(u => u.Id == dto.UserId);
+            if (!userExists) return BadRequest(new { message = "User không tồn tại." });
+
+            var book = await _context.Books.FindAsync(dto.BookId);
+            if (book == null) return BadRequest(new { message = "Sách không tồn tại." });
+            if (book.AvailableCopies <= 0) return BadRequest(new { message = "Sách đã hết, không thể mượn." });
+
+            bool existingBorrow = await _context.Borrows
+                .AnyAsync(b => b.UserId == dto.UserId && b.BookId == dto.BookId && (b.Status == "borrowed" || b.Status == "request"));
+            if (existingBorrow) return BadRequest(new { message = "User đã có yêu cầu mượn hoặc đang mượn sách này." });
+
+            var borrow = new Borrow
+            {
+                UserId = dto.UserId,
+                BookId = dto.BookId,
+                BorrowDate = dto.BorrowDate ?? DateTime.Now,
+                DueDate = dto.DueDate == null || dto.DueDate == default
+                    ? DateTime.Now.AddDays(14)
+                    : DateTime.SpecifyKind(dto.DueDate.Value, DateTimeKind.Local),
+                Status = "borrowed", // 🔥 STAFF tạo trực tiếp với status "borrowed"
+                Notes = dto.Notes,
+                Createdat = DateTime.Now,
+                Updatedat = DateTime.Now
+            };
+
+            // Trừ AvailableCopies ngay khi tạo borrow
+            book.AvailableCopies = (book.AvailableCopies ?? 0) - 1;
+            _context.Borrows.Add(borrow);
+            await _context.SaveChangesAsync();
+
+            // Tạo Fee record cho borrow fee (nếu có)
+            if (dto.Fee.HasValue && dto.Fee.Value > 0)
+            {
+                var borrowFee = new Fee
+                {
+                    BorrowId = borrow.Id,
+                    UserId = dto.UserId,
+                    Amount = dto.Fee.Value,
+                    Type = "borrow_fee",
+                    Status = "unpaid",
+                    Notes = "Phí mượn sách - Tạo bởi staff",
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.Fees.Add(borrowFee);
+                await _context.SaveChangesAsync();
+            }
+
+            await _context.Entry(borrow).Reference(b => b.User).LoadAsync();
+            await _context.Entry(borrow).Reference(b => b.Book).LoadAsync();
+
+            return CreatedAtAction(nameof(GetBorrow), new { id = borrow.Id }, new
+            {
+                borrow.Id,
+                borrow.UserId,
+                borrow.BookId,
+                borrow.BorrowDate,
+                borrow.DueDate,
+                borrow.Status,
+                borrow.Createdat,
+                Message = "✅ Staff đã tạo phiếu mượn thành công với trạng thái 'borrowed'"
             });
         }
 
@@ -653,7 +729,7 @@ namespace BackendApi.Controllers
                 // Lấy thông tin hiện tại
                 var currentAvailable = borrow.Book.AvailableCopies ?? 0;
                 var totalCopies = borrow.Book.TotalCopies ?? 0;
-                
+
                 Console.WriteLine($"📊 REJECT - Book ID: {borrow.Book.Id}, Available: {currentAvailable}, Total: {totalCopies}");
 
                 // Cập nhật borrow status
@@ -672,6 +748,36 @@ namespace BackendApi.Controllers
                     Console.WriteLine($"⚠️ SKIP RESTORE: Available({currentAvailable}) >= Total({totalCopies})");
                 }
 
+                // 🆕 Xóa phí mặc định mượn sách (20,000 VND)
+                var defaultFees = await _context.Fees
+                    .Where(f => f.BorrowId == id && 
+                               f.Type == "borrow_fee" && 
+                               f.Status != "paid")
+                    .ToListAsync();
+
+                Console.WriteLine($"🔍 SEARCHING FEES: BorrowId={id}, Found={defaultFees.Count} fees");
+
+                int deletedFeesCount = 0;
+                decimal deletedFeesAmount = 0;
+
+                if (defaultFees.Any())
+                {
+                    deletedFeesCount = defaultFees.Count;
+                    deletedFeesAmount = defaultFees.Sum(f => f.Amount);
+                    
+                    _context.Fees.RemoveRange(defaultFees);
+                    Console.WriteLine($"🗑️ DELETED FEES: {deletedFeesCount} fees, total: {deletedFeesAmount:C}");
+                }
+                else
+                {
+                    // Debug: Show all fees for this borrow
+                    var allFeesForBorrow = await _context.Fees
+                        .Where(f => f.BorrowId == id)
+                        .Select(f => new { f.Id, f.Type, f.Status, f.Amount })
+                        .ToListAsync();
+                    Console.WriteLine($"🔍 ALL FEES FOR BORROW {id}: {string.Join(", ", allFeesForBorrow.Select(f => $"[{f.Id}:{f.Type}:{f.Status}:{f.Amount}]"))}");
+                }
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -688,6 +794,14 @@ namespace BackendApi.Controllers
                         availableCopies = borrow.Book.AvailableCopies,
                         totalCopies = borrow.Book.TotalCopies,
                         wasRestored = currentAvailable < totalCopies
+                    },
+                    feesInfo = new
+                    {
+                        deletedCount = deletedFeesCount,
+                        deletedAmount = deletedFeesAmount,
+                        message = deletedFeesCount > 0 
+                            ? $"Đã xóa {deletedFeesCount} phí mượn sách ({deletedFeesAmount:C})"
+                            : "Không có phí nào cần xóa"
                     }
                 });
             }
@@ -695,9 +809,10 @@ namespace BackendApi.Controllers
             {
                 await transaction.RollbackAsync();
                 Console.WriteLine($"❌ REJECT ERROR: {ex.Message}");
-                return StatusCode(500, new { 
-                    message = "Lỗi khi từ chối yêu cầu mượn sách", 
-                    error = ex.Message 
+                return StatusCode(500, new
+                {
+                    message = "Lỗi khi từ chối yêu cầu mượn sách",
+                    error = ex.Message
                 });
             }
         }
@@ -732,7 +847,7 @@ namespace BackendApi.Controllers
             try
             {
                 var query = _context.Borrows.AsQueryable();
-                
+
                 if (!string.IsNullOrEmpty(status))
                 {
                     query = query.Where(b => b.Status == status);
@@ -774,13 +889,14 @@ namespace BackendApi.Controllers
             {
                 using var scope = _serviceProvider.CreateScope();
                 var syncService = scope.ServiceProvider.GetService<Services.BookQuantitySyncService>();
-                
+
                 if (syncService != null)
                 {
                     await syncService.TriggerManualSync();
-                    return Ok(new { 
+                    return Ok(new
+                    {
                         message = "Manual sync triggered successfully.",
-                        timestamp = DateTime.Now 
+                        timestamp = DateTime.Now
                     });
                 }
                 else
@@ -791,9 +907,10 @@ namespace BackendApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { 
-                    message = "Lỗi khi trigger manual sync", 
-                    error = ex.Message 
+                return StatusCode(500, new
+                {
+                    message = "Lỗi khi trigger manual sync",
+                    error = ex.Message
                 });
             }
         }
@@ -814,14 +931,14 @@ namespace BackendApi.Controllers
                 foreach (var book in books)
                 {
                     var borrowedOrRequestedCount = await _context.Borrows
-                        .CountAsync(b => b.BookId == book.Id && 
+                        .CountAsync(b => b.BookId == book.Id &&
                                        (b.Status == "borrowed" || b.Status == "request"));
 
                     var expectedAvailable = Math.Max(0, (book.TotalCopies ?? 0) - borrowedOrRequestedCount);
                     var currentAvailable = book.AvailableCopies ?? 0;
 
                     var isConsistent = expectedAvailable == currentAvailable;
-                    
+
                     if (!isConsistent)
                     {
                         inconsistentCount++;
@@ -843,8 +960,8 @@ namespace BackendApi.Controllers
 
                 return Ok(new
                 {
-                    message = inconsistentCount == 0 ? 
-                        "Tất cả sách có số lượng chính xác." : 
+                    message = inconsistentCount == 0 ?
+                        "Tất cả sách có số lượng chính xác." :
                         $"Phát hiện {inconsistentCount} sách có số lượng không chính xác.",
                     totalBooks = books.Count,
                     inconsistentBooks = inconsistentCount,
@@ -854,9 +971,10 @@ namespace BackendApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { 
-                    message = "Lỗi khi kiểm tra số lượng sách", 
-                    error = ex.Message 
+                return StatusCode(500, new
+                {
+                    message = "Lỗi khi kiểm tra số lượng sách",
+                    error = ex.Message
                 });
             }
         }
@@ -879,7 +997,7 @@ namespace BackendApi.Controllers
                 {
                     // Tính số sách đang được mượn hoặc đang chờ duyệt
                     var borrowedOrRequestedCount = await _context.Borrows
-                        .CountAsync(b => b.BookId == book.Id && 
+                        .CountAsync(b => b.BookId == book.Id &&
                                        (b.Status == "borrowed" || b.Status == "request"));
 
                     // Tính số sách có sẵn thực tế = Tổng số - Đang mượn/chờ duyệt
@@ -890,7 +1008,7 @@ namespace BackendApi.Controllers
                     if (actualAvailable != currentAvailable)
                     {
                         Console.WriteLine($"🔄 SYNC Book ID {book.Id}: {currentAvailable} → {actualAvailable} (Total: {book.TotalCopies}, Borrowed: {borrowedOrRequestedCount})");
-                        
+
                         book.AvailableCopies = actualAvailable;
                         book.Updatedat = DateTime.Now;
                         totalSynced++;
@@ -915,8 +1033,8 @@ namespace BackendApi.Controllers
 
                 return Ok(new
                 {
-                    message = totalSynced > 0 ? 
-                        $"Đã đồng bộ {totalSynced} sách." : 
+                    message = totalSynced > 0 ?
+                        $"Đã đồng bộ {totalSynced} sách." :
                         "Tất cả sách đã đồng bộ chính xác.",
                     totalBooksChecked = books.Count,
                     totalSynced,
@@ -926,9 +1044,10 @@ namespace BackendApi.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ SYNC ERROR: {ex.Message}");
-                return StatusCode(500, new { 
-                    message = "Lỗi khi đồng bộ số lượng sách", 
-                    error = ex.Message 
+                return StatusCode(500, new
+                {
+                    message = "Lỗi khi đồng bộ số lượng sách",
+                    error = ex.Message
                 });
             }
         }
@@ -949,7 +1068,7 @@ namespace BackendApi.Controllers
                 foreach (var book in corruptedBooks)
                 {
                     Console.WriteLine($"🔧 HEALING Book ID {book.Id}: Available({book.AvailableCopies}) > Total({book.TotalCopies})");
-                    
+
                     book.AvailableCopies = book.TotalCopies; // Reset về max allowed
                     healedCount++;
                 }
@@ -961,8 +1080,8 @@ namespace BackendApi.Controllers
 
                 return Ok(new
                 {
-                    message = healedCount > 0 ? 
-                        $"Đã sửa {healedCount} sách có dữ liệu bị lỗi." : 
+                    message = healedCount > 0 ?
+                        $"Đã sửa {healedCount} sách có dữ liệu bị lỗi." :
                         "Không tìm thấy dữ liệu bị lỗi.",
                     healedBooks = corruptedBooks.Select(b => new
                     {
@@ -976,9 +1095,10 @@ namespace BackendApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { 
-                    message = "Lỗi khi sửa dữ liệu", 
-                    error = ex.Message 
+                return StatusCode(500, new
+                {
+                    message = "Lỗi khi sửa dữ liệu",
+                    error = ex.Message
                 });
             }
         }

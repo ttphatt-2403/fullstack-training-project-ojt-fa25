@@ -73,9 +73,32 @@ export const borrowService = {
     return response.data;
   },
 
-  // Tạo mới Borrow (mượn sách)
+  // Tạo mới Borrow (mượn sách) - User request
   createBorrow: async (borrowData) => {
-    const response = await api.post('/Borrow', borrowData);
+    const response = await api.post('/Borrow/request', borrowData); // Update endpoint
+    return response.data;
+  },
+
+  // 🔥 API mới cho Staff tạo phiếu mượn trực tiếp (borrowed status)
+  staffCreateBorrow: async (borrowData) => {
+    console.log('🔄 Staff creating borrow:', borrowData);
+    
+    // Debug JWT token
+    const token = localStorage.getItem('token');
+    console.log('🔑 JWT Token exists:', !!token);
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('👤 Token payload:', payload);
+        console.log('🎭 User role:', payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']);
+        console.log('⏰ Token expires:', new Date(payload.exp * 1000));
+      } catch (e) {
+        console.error('❌ Invalid token format:', e);
+      }
+    }
+    
+    const response = await api.post('/Borrow/staff-checkin', borrowData);
+    console.log('✅ Staff borrow created:', response.data);
     return response.data;
   },
 

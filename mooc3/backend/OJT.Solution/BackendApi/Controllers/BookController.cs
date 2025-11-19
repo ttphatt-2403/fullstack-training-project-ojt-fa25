@@ -128,14 +128,16 @@ namespace BackendApi.Controllers
             var q = (query ?? "").Trim();
             if (!string.IsNullOrEmpty(q))
             {
-                // Use EF.Functions.Like where possible — relying on DB collation for case-insensitivity.
-                var pattern = $"%{q}%";
+                // Convert query to lowercase for case-insensitive search
+                var lowerQuery = q.ToLower();
+                var pattern = $"%{lowerQuery}%";
+
                 booksQuery = booksQuery.Where(b =>
-                    // Null safe checks using coalesce
-                    EF.Functions.Like(b.Title ?? "", pattern) ||
-                    EF.Functions.Like(b.Author ?? "", pattern) ||
-                    EF.Functions.Like(b.Isbn ?? "", pattern) ||
-                    EF.Functions.Like(b.Category != null ? b.Category.Name : "", pattern)
+                    // Case-insensitive search using ToLower()
+                    EF.Functions.Like((b.Title ?? "").ToLower(), pattern) ||
+                    EF.Functions.Like((b.Author ?? "").ToLower(), pattern) ||
+                    EF.Functions.Like((b.Isbn ?? "").ToLower(), pattern) ||
+                    EF.Functions.Like((b.Category != null ? b.Category.Name : "").ToLower(), pattern)
                 );
             }
 

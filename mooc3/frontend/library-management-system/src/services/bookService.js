@@ -73,6 +73,9 @@ export const bookService = {
   getBooks: async ({ page = 1, pageSize = 10 } = {}) => {
     const params = { pageNumber: page, pageSize };
     const response = await api.get('/Book', { params });
+    
+    console.log('Raw Books API response:', response.data); // Debug log
+    
     return normalizeListResponse(response);
   },
 

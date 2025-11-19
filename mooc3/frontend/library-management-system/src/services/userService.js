@@ -9,7 +9,9 @@ getAllUsers: async (params = {}) => {
 
   const { data, headers } = await api.get('/Users', { params: q });
 
-  // Chuẩn hóa items
+  console.log('Raw Users API response:', data); // Debug log
+
+  // Chuẩn hóa items - Backend trả về PascalCase
   const items =
     (data?.data?.items) ||
     (data?.data?.users) ||
@@ -19,10 +21,25 @@ getAllUsers: async (params = {}) => {
     (Array.isArray(data) ? data : []) ||
     [];
 
+  // Normalize PascalCase to camelCase for frontend consistency  
+  const normalizedItems = items.map(user => ({
+    id: user.Id || user.id,
+    username: user.Username || user.username,
+    email: user.Email || user.email,
+    fullName: user.Fullname || user.fullName || user.fullname, // Backend uses "Fullname"
+    phone: user.Phone || user.phone,
+    avatarUrl: user.Avatarurl || user.avatarUrl || user.avatar_url,
+    dateOfBirth: user.Dateofbirth || user.dateOfBirth || user.date_of_birth,
+    role: user.Role || user.role,
+    isActive: user.Isactive || user.isActive || user.is_active,
+    createdAt: user.Createdat || user.createdAt || user.created_at,
+    updatedAt: user.Updatedat || user.updatedAt || user.updated_at
+  }));
+
   // Chuẩn hóa total
   const total =
-    data?.total ||
     data?.totalUsers ||
+    data?.total ||
     data?.totalCount ||
     data?.meta?.total ||
     data?.meta?.totalUsers ||
@@ -30,7 +47,7 @@ getAllUsers: async (params = {}) => {
     items.length;
 
   return {
-    items,
+    items: normalizedItems,
     total,
     pageNumber: q.pageNumber || data?.pageNumber || data?.page || 1,
     pageSize: q.pageSize || data?.pageSize || data?.page_size || 10,

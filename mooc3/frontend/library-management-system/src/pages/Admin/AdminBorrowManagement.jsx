@@ -10,7 +10,7 @@ import { PlusOutlined, ReloadOutlined, EyeOutlined, DollarOutlined } from '@ant-
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
-function StaffBorrowManagement() {
+function AdminBorrowManagement() {
   // State cho tab hiện tại
   const [activeTab, setActiveTab] = useState('pending');
   const [loading, setLoading] = useState(false);
@@ -1531,4 +1531,4 @@ function StaffBorrowManagement() {
   );
 }
 
-export default StaffBorrowManagement;
+export default AdminBorrowManagement;

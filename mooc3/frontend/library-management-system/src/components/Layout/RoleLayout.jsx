@@ -15,8 +15,10 @@ function RoleLayout({ role, children }) {
       { key: 'dashboard', label: 'Dashboard', onClick: () => navigate('/admin') },
       { key: 'profile', label: '👤 Thông tin cá nhân', onClick: () => navigate('/admin/profile') },
       { key: 'users', label: '👤 Quản lý User', onClick: () => navigate('/admin/users') },
-      { key: 'books', label: '👤 Quản lý Sách', onClick: () => navigate('/admin/books') },       
-      { key: 'categories', label: 'Quản lý Thể loại', onClick: () => navigate('/admin/categories') }, 
+      { key: 'books', label: '📚 Quản lý Sách', onClick: () => navigate('/admin/books') },       
+      { key: 'categories', label: '📖 Quản lý Thể loại', onClick: () => navigate('/admin/categories') },
+      { key: 'borrows', label: '📋 Quản lý mượn sách', onClick: () => navigate('/admin/borrows') },
+      { key: 'fees', label: '💰 Quản lý phí', onClick: () => navigate('/admin/fees') },
     ],
     Staff: [
       { key: 'dashboard', label: 'Dashboard', onClick: () => navigate('/staff') },
@@ -43,6 +45,8 @@ function RoleLayout({ role, children }) {
     else if (location.pathname.startsWith('/admin/users')) selectedKey = 'users';
     else if (location.pathname.startsWith('/admin/books')) selectedKey = 'books';
     else if (location.pathname.startsWith('/admin/categories')) selectedKey = 'categories';
+    else if (location.pathname.startsWith('/admin/borrows')) selectedKey = 'borrows';
+    else if (location.pathname.startsWith('/admin/fees')) selectedKey = 'fees';
   } else if (role === 'Staff') {
     if (location.pathname === '/staff') selectedKey = 'dashboard';
     else if (location.pathname.startsWith('/staff/profile')) selectedKey = 'profile';

@@ -103,12 +103,15 @@ function UserBooksPage() {
     console.log('Filtering books:', books.length, 'searchText:', searchText, 'selectedCategory:', selectedCategory);
     let filtered = [...books];
 
-    // Filter by search text
+    // Filter by search text - Enhanced with more fields
     if (searchText) {
       filtered = filtered.filter(book => 
         book.title?.toLowerCase().includes(searchText.toLowerCase()) ||
         book.author?.toLowerCase().includes(searchText.toLowerCase()) ||
-        book.isbn?.toLowerCase().includes(searchText.toLowerCase())
+        book.isbn?.toLowerCase().includes(searchText.toLowerCase()) ||
+        book.publisher?.toLowerCase().includes(searchText.toLowerCase()) ||
+        book.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        book.category?.name?.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
@@ -202,12 +205,19 @@ function UserBooksPage() {
             Khám phá hàng ngàn đầu sách chất lượng cao
           </Paragraph>
           
+          {/* Search Tips */}
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px' }}>
+              💡 Mẹo tìm kiếm: Gõ tên sách, tác giả, ISBN, nhà xuất bản, thể loại hoặc mô tả để tìm sách phù hợp
+            </Text>
+          </div>
+          
           <div className="search-section">
             <Row gutter={16} justify="center">
               <Col xs={24} sm={16} md={12} lg={10}>
                 <Input
                   size="large"
-                  placeholder="Tìm theo tên sách, tác giả, ISBN..."
+                  placeholder="Tìm theo tên sách, tác giả, ISBN, NXB, mô tả, thể loại..."
                   prefix={<SearchOutlined />}
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
@@ -322,9 +332,24 @@ function UserBooksPage() {
 
         {/* All Books Section */}
         <div>
-          <Title level={3} style={{ marginBottom: '24px' }}>
-            {selectedCategoryName}
-          </Title>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <Title level={3} style={{ margin: 0 }}>
+              {selectedCategoryName}
+            </Title>
+            
+            {/* Search Results Info */}
+            {searchText && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tag color="blue" style={{ margin: 0 }}>
+                  <SearchOutlined style={{ marginRight: '4px' }} />
+                  Từ khóa: "{searchText}"
+                </Tag>
+                <Text type="secondary">
+                  {filteredBooks.length} kết quả
+                </Text>
+              </div>
+            )}
+          </div>
           
           <Spin spinning={loading}>
             <Row gutter={[16, 16]}>
