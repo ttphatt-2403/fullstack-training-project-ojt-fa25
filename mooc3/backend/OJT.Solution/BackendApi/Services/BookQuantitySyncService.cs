@@ -1,4 +1,4 @@
-using BackendApi.Models;
+﻿using BackendApi.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BackendApi.Services
@@ -21,7 +21,7 @@ namespace BackendApi.Services
         {
             // Chạy sync đầu tiên khi startup (sau 30 giây)
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-            
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -53,7 +53,7 @@ namespace BackendApi.Services
                 {
                     // Tính số sách đang được mượn hoặc đang chờ duyệt
                     var borrowedOrRequestedCount = await context.Borrows
-                        .CountAsync(b => b.BookId == book.Id && 
+                        .CountAsync(b => b.BookId == book.Id &&
                                        (b.Status == "borrowed" || b.Status == "request"));
 
                     // Tính số sách có sẵn thực tế
@@ -67,7 +67,7 @@ namespace BackendApi.Services
                             "🔄 SYNC Book ID {BookId}: {OldAvailable} → {NewAvailable} (Total: {Total}, Borrowed: {Borrowed})",
                             book.Id, currentAvailable, actualAvailable, book.TotalCopies, borrowedOrRequestedCount
                         );
-                        
+
                         book.AvailableCopies = actualAvailable;
                         book.Updatedat = DateTime.Now;
                         totalSynced++;

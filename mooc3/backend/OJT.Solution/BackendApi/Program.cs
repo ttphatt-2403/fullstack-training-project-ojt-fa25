@@ -89,6 +89,8 @@ builder.Services.AddSwaggerGen(c =>
 
 // Đăng ký Background Service cho auto sync book quantities
 builder.Services.AddHostedService<BookQuantitySyncService>();
+// Đăng ký DashboardService
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
 

@@ -9,17 +9,20 @@ import AdminBookPage from './pages/Admin/AdminBookPage';
 import AdminCategoryPage from './pages/Admin/AdminCategoryPage';
 import AdminBorrowManagement from './pages/Admin/AdminBorrowManagement';
 import AdminFeeManagement from './pages/Admin/AdminFeeManagement';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
 import StaffPage from './pages/Staff/StaffPage';
 import StaffBookInventory from './pages/Staff/StaffBookInventory';
 import StaffBorrowManagement from './pages/Staff/StaffBorrowManagement';
 import StaffFeeManagement from './pages/Staff/StaffFeeManagement';
 import StaffCheckin from './pages/Staff/StaffCheckin';
+import StaffDashboard from './pages/Staff/StaffDashboard';
 
 import UserPage from './pages/User/UserPage';
 import UserBooksPage from './pages/User/UserBooksPage';
 import UserBorrows from './pages/User/UserBorrows';
 import UserFees from './pages/User/UserFees';
+import UserDashboard from './pages/User/UserDashboard';
 
 import ProfilePage from './pages/Profile/ProfilePage';
 import NotFound from './pages/NotFound';
@@ -66,7 +69,7 @@ function App() {
             <AdminPage />
           </PrivateRoute>
         }>
-          <Route index element={<div>Trang Admin - Dashboard</div>} />
+          <Route index element={<AdminDashboard />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="books" element={<AdminBookPage />} />
@@ -81,7 +84,7 @@ function App() {
             <StaffPage />
           </PrivateRoute>
         }>
-          <Route index element={<div>Trang Staff - Dashboard</div>} />
+          <Route index element={<StaffDashboard />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="checkin" element={<StaffCheckin />} />
           <Route path="books" element={<StaffBookInventory />} />
@@ -95,7 +98,7 @@ function App() {
             <UserPage />
           </PrivateRoute>
         }>
-          <Route index element={<div>Trang User - Dashboard</div>} />
+          <Route index element={<UserDashboard />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="books" element={<UserBooksPage />} />
           <Route path="borrows" element={<UserBorrows />} />
