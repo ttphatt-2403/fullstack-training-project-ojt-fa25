@@ -17,33 +17,27 @@ export const borrowService = {
   // Lấy danh sách Borrow đang hoạt động (borrowed)
   getActiveBorrows: async (params = {}) => {
     const { pageNumber = 1, pageSize = 20 } = params;
-    console.log(`🔍 Fetching active borrows: page=${pageNumber}, pageSize=${pageSize}`);
     const response = await api.get('/Borrow', {
       params: { pageNumber, pageSize, status: 'borrowed' }
     });
-    console.log(`✅ Active borrows response:`, response.data);
     return response.data;
   },
 
   // Lấy danh sách Borrow đã trả (returned)
   getReturnedBorrows: async (params = {}) => {
     const { pageNumber = 1, pageSize = 20 } = params;
-    console.log(`🔍 Fetching returned borrows: page=${pageNumber}, pageSize=${pageSize}`);
     const response = await api.get('/Borrow', {
       params: { pageNumber, pageSize, status: 'returned' }
     });
-    console.log(`✅ Returned borrows response:`, response.data);
     return response.data;
   },
 
   // Lấy danh sách yêu cầu mượn chờ duyệt (request)
   getPendingRequests: async (params = {}) => {
     const { pageNumber = 1, pageSize = 20 } = params;
-    console.log(`🔍 Fetching pending requests: page=${pageNumber}, pageSize=${pageSize}`);
     const response = await api.get('/Borrow', {
       params: { pageNumber, pageSize, status: 'request' }
     });
-    console.log(`✅ Pending requests response:`, response.data);
     return response.data;
   },
 

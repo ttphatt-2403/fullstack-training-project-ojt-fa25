@@ -41,6 +41,18 @@ export const feeService = {
     return response.data;
   },
 
+  // Tạo URL thanh toán VNPay
+  createVNPayPayment: async (feeId) => {
+    const response = await api.post('/VnPay/CreatePaymentUrl', { FeeId: feeId });
+    return response.data;
+  },
+
+  // Xác nhận thanh toán VNPay (simulate IPN)
+  confirmVNPayPayment: async (feeId, params) => {
+    const response = await api.post('/VnPay/ConfirmPayment', { FeeId: feeId, Params: params });
+    return response.data;
+  },
+
   // Xóa phí
   deleteFee: async (id) => {
     const response = await api.delete(`/Fee/${id}`);

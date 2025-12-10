@@ -78,9 +78,6 @@ const StaffCheckin = () => {
   const loadUsers = async () => {
     try {
       const response = await userService.getAllUsers({ pageSize: 1000 });
-      console.log('Users response:', response);
-      console.log('Users items:', response.items);
-      console.log('First user:', response.items?.[0]);
       setUsers(response.items || []);
     } catch (error) {
       console.error('Load users error:', error);
@@ -91,9 +88,6 @@ const StaffCheckin = () => {
   const loadBooks = async () => {
     try {
       const response = await bookService.getBooks({ pageSize: 1000 });
-      console.log('Books service response:', response);
-      console.log('Books items:', response.items);
-      console.log('First book:', response.items?.[0]);
       
       // Use normalized books from service
       const availableBooks = (response.items || []).filter(book => 
@@ -101,8 +95,6 @@ const StaffCheckin = () => {
       );
       
       setBooks(availableBooks);
-      console.log('Available books count:', availableBooks.length);
-      console.log('All books count:', response.items?.length);
     } catch (error) {
       console.error('Load books error:', error);
     }
@@ -132,14 +124,10 @@ const StaffCheckin = () => {
   const loadRecentBorrows = async () => {
     try {
       const response = await borrowService.getActiveBorrows({ pageNumber: 1, pageSize: 5 });
-      console.log('Recent borrows response:', response);
-      console.log('Recent borrows data:', response.data);
-      console.log('Recent borrows items:', response.items);
       
       // Try different response structures
       const borrowsData = response.data || response.items || response || [];
       setRecentBorrows(borrowsData);
-      console.log('Set recent borrows:', borrowsData);
     } catch (error) {
       console.error('Load recent borrows error:', error);
     }
@@ -154,10 +142,6 @@ const StaffCheckin = () => {
       const currentUser = authService.getCurrentUser();
       const token = localStorage.getItem('token');
       
-      console.log('🔐 Current user:', currentUser);
-      console.log('🎭 User role:', currentUser?.role);
-      console.log('🔑 Token exists:', !!token);
-      
       if (!token) {
         message.error('Bạn chưa đăng nhập! Vui lòng đăng nhập lại.');
         return;
@@ -168,8 +152,6 @@ const StaffCheckin = () => {
         message.error(`Bạn không có quyền thực hiện chức năng này! Role hiện tại: ${currentUser?.role}`);
         return;
       }
-      
-      console.log('✅ Role check passed. User role:', currentUser?.role);
       
       const borrowData = {
         userId: parseInt(values.userId),
@@ -341,7 +323,10 @@ const StaffCheckin = () => {
                       filterOption={(input, option) => {
                         const user = users.find(u => (u.id || u.Id) === option.value);
                         if (!user) return false;
-                        const searchText = `${user.id || user.Id} ${user.fullName || user.Fullname || user.username || user.Username} ${user.email || user.Email}`;
+                        const fullName = user.fullname || user.fullName || user.Fullname || user.FullName || 'N/A';
+                        const userName = user.username || user.Username || user.userName || user.UserName || '';
+                        const email = user.email || user.Email || '';
+                        const searchText = `${user.id || user.Id} ${fullName} ${userName} ${email}`;
                         return searchText.toLowerCase().includes(input.toLowerCase());
                       }}
                       style={{ width: '100%' }}
@@ -349,9 +334,18 @@ const StaffCheckin = () => {
                       {users.map(user => (
                         <Option key={user.id || user.Id} value={user.id || user.Id}>
                           <div>
-                            <strong>#{user.id || user.Id}</strong> - {user.fullName || user.Fullname || user.username || user.Username}
-                            <br />
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong>#{user.id || user.Id}</strong>
+                              <Text type="secondary" style={{ fontSize: '11px' }}>
+                                {user.role || user.Role || 'User'}
+                              </Text>
+                            </div>
+                            <div style={{ marginTop: '2px' }}>
+                              <Text strong style={{ fontSize: '13px' }}>
+                                {user.fullname || user.fullName || user.Fullname || user.FullName || user.username || user.Username || 'N/A'}
+                              </Text>
+                            </div>
+                            <Text type="secondary" style={{ fontSize: '11px' }}>
                               {user.email || user.Email}
                             </Text>
                           </div>

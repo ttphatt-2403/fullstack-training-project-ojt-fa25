@@ -63,8 +63,6 @@ export const userService = {
 
     const { data, headers } = await api.get('/Users', { params: query });
 
-    console.log('Raw Users API response:', data); // Debug (có thể xóa sau)
-
     const rawItems = extractItems(data);
     const items = rawItems.map(normalizeUser);
     const total = extractTotal(data, headers, rawItems.length);

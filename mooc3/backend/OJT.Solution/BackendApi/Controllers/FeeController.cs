@@ -2,6 +2,7 @@ using BackendApi.Dtos;
 using BackendApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BackendApi.Controllers
 {
@@ -193,6 +194,25 @@ namespace BackendApi.Controllers
                     return BadRequest(new { message = "Phí này đã được thanh toán rồi." });
                 }
 
+                // Nếu thanh toán online (VNPay), tạo URL thanh toán
+                if (request?.PaymentMethod == "vnpay")
+                {
+                    var vnPayController = new VnPayController(_context, HttpContext.RequestServices.GetRequiredService<IConfiguration>());
+                    var paymentRequest = new VnPayPaymentRequest { FeeId = id };
+                    var result = await vnPayController.CreatePaymentUrl(paymentRequest);
+                    if (result is OkObjectResult okResult && okResult.Value is not null)
+                    {
+                        var paymentUrl = okResult.Value.GetType().GetProperty("PaymentUrl")?.GetValue(okResult.Value, null)?.ToString();
+                        return Ok(new { 
+                            message = "Chuyển hướng đến VNPay để thanh toán", 
+                            paymentUrl = paymentUrl,
+                            feeId = id
+                        });
+                    }
+                    return result;
+                }
+
+                // Thanh toán trực tiếp (cash, etc.)
                 // Update fee properties với DateTime an toàn cho PostgreSQL
                 fee.Status = "paid";
                 

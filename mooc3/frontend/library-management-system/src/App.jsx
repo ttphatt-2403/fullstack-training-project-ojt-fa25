@@ -23,6 +23,8 @@ import UserBooksPage from './pages/User/UserBooksPage';
 import UserBorrows from './pages/User/UserBorrows';
 import UserFees from './pages/User/UserFees';
 import UserDashboard from './pages/User/UserDashboard';
+import PaymentSuccessPage from './pages/Payment/PaymentSuccessPage';
+import PaymentCancelPage from './pages/Payment/PaymentCancelPage';
 
 import ProfilePage from './pages/Profile/ProfilePage';
 import NotFound from './pages/NotFound';
@@ -104,6 +106,10 @@ function App() {
           <Route path="borrows" element={<UserBorrows />} />
           <Route path="fees" element={<UserFees />} />
         </Route>
+
+        {/* Payment pages (public for VNPay return) */}
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/cancel" element={<PaymentCancelPage />} />
 
         {/* Home redirect */}
         <Route path="/" element={<HomeRedirect />} />

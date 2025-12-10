@@ -10,7 +10,10 @@ import {
   Space,
   DatePicker,
   message,
+  Card,
+  Empty,
 } from "antd";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import userService from "../../services/userService";
 
@@ -125,7 +128,6 @@ const UserManagement = () => {
           role: values.role ? values.role.toLowerCase() : null,
           isactive: values.isactive
         };
-        console.log('Update user payload:', payload);
         await userService.updateUser(editUser.id, payload);
         message.success("Cập nhật thành công!");
       } else {
@@ -209,7 +211,7 @@ const UserManagement = () => {
       key: "actions",
       render: (_, user) => (
         <Space>
-          <Button type="link" onClick={() => openEditModal(user)}>
+          <Button icon={<EditOutlined />} type="link" onClick={() => openEditModal(user)}>
             Sửa
           </Button>
           <Popconfirm
@@ -218,7 +220,7 @@ const UserManagement = () => {
             okText="Xóa"
             cancelText="Huỷ"
           >
-            <Button type="link" danger>
+            <Button icon={<DeleteOutlined />} type="link" danger>
               Xóa
             </Button>
           </Popconfirm>
@@ -235,7 +237,7 @@ const UserManagement = () => {
   ];
 
   return (
-    <div>
+    <Card title="Quản lý Người Dùng" bordered={false}>
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         <Button type="primary" onClick={openCreateModal}>
           Thêm User mới
@@ -259,6 +261,7 @@ const UserManagement = () => {
         loading={loading}
         pagination={{ ...pagination, showSizeChanger: false }}
         onChange={handleTableChange}
+        locale={{ emptyText: <Empty description="Không có người dùng nào" /> }}
       />
 
       <Modal
@@ -318,7 +321,7 @@ const UserManagement = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </Card>
   );
 };
 

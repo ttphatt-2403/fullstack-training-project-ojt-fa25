@@ -8,11 +8,7 @@ import {
   Col, 
   Tag, 
   Button, 
-  message, 
-  Modal, 
-  Form,
-  Select,
-  Input
+  message
 } from 'antd';
 import { 
   MoneyCollectOutlined, 
@@ -24,7 +20,6 @@ import { authService } from '../../services/authService';
 import { feeService } from '../../services/feeService';
 
 const { TabPane } = Tabs;
-const { TextArea } = Input;
 
 function UserFees() {
   // Separate loading flags to avoid a single shared loader blocking the UI
@@ -50,9 +45,6 @@ function UserFees() {
     pageSize: 10,
     total: 0
   });
-  const [payModalVisible, setPayModalVisible] = useState(false);
-  const [selectedFee, setSelectedFee] = useState(null);
-  const [payForm] = Form.useForm();
 
   // Get user from authService
   const user = authService.getCurrentUser();
@@ -120,21 +112,18 @@ function UserFees() {
   };
 
   // Handle payment
-  const handlePay = async (values) => {
+  const handlePay = async (fee) => {
     try {
       setPayLoading(true);
-      await feeService.payFee(selectedFee.id, values);
-      message.success('Thanh toán thành công!');
-      setPayModalVisible(false);
-      payForm.resetFields();
-      setSelectedFee(null);
-
-      // Refresh data
-      fetchStatistics();
-      fetchUnpaidFees(unpaidPagination.current);
-      fetchPaidFees(paidPagination.current);
+      const response = await feeService.createVNPayPayment(fee.id);
+      if (response && response.paymentUrl) {
+        window.location.href = response.paymentUrl; // Redirect to VNPay
+      } else {
+        message.error('Không nhận được URL thanh toán từ server');
+      }
     } catch (error) {
-      message.error('Lỗi khi thanh toán: ' + (error?.message || error));
+      console.error('Payment error:', error);
+      message.error('Lỗi khi tạo thanh toán: ' + (error?.message || error));
     } finally {
       setPayLoading(false);
     }
@@ -245,12 +234,10 @@ function UserFees() {
         <Button 
           type="primary" 
           icon={<PayCircleOutlined />}
-          onClick={() => {
-            setSelectedFee(record);
-            setPayModalVisible(true);
-          }}
+          loading={payLoading}
+          onClick={() => handlePay(record)}
         >
-          Thanh toán
+          Thanh toán VNPay
         </Button>
       ),
     }] : [])
@@ -387,75 +374,7 @@ function UserFees() {
             </Tabs>
           </Card>
         </>
-      )}      {/* Payment Modal */}
-      <Modal
-        title="Thanh toán phí"
-        open={payModalVisible}
-        onCancel={() => {
-          setPayModalVisible(false);
-          payForm.resetFields();
-          setSelectedFee(null);
-        }}
-        footer={null}
-        width={500}
-      >
-        {selectedFee && (
-          <div style={{ marginBottom: '16px' }}>
-            <p><strong>Phí ID:</strong> {selectedFee.id}</p>
-            <p><strong>Loại phí:</strong> {getFeeTypeTag(selectedFee.type)}</p>
-            <p><strong>Số tiền:</strong> <span style={{ color: '#f5222d', fontSize: '16px', fontWeight: 'bold' }}>{formatCurrency(selectedFee.amount)}</span></p>
-            <p><strong>Phiếu mượn:</strong> #{selectedFee.borrow?.id} - {selectedFee.borrow?.book?.title}</p>
-          </div>
-        )}
-
-            <Form
-          form={payForm}
-          layout="vertical"
-          onFinish={handlePay}
-        >
-          <Form.Item
-            name="paymentMethod"
-            label="Phương thức thanh toán"
-            rules={[{ required: true, message: 'Vui lòng chọn phương thức thanh toán!' }]}
-          >
-            <Select placeholder="Chọn phương thức thanh toán">
-              <Select.Option value="cash">Tiền mặt</Select.Option>
-              <Select.Option value="transfer">Chuyển khoản</Select.Option>
-              <Select.Option value="card">Thẻ tín dụng</Select.Option>
-              <Select.Option value="momo">Ví MoMo</Select.Option>
-              <Select.Option value="zalopay">ZaloPay</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="notes"
-            label="Ghi chú"
-          >
-            <TextArea rows={3} placeholder="Ghi chú về thanh toán..." />
-          </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-            <Button 
-              onClick={() => {
-                setPayModalVisible(false);
-                payForm.resetFields();
-                setSelectedFee(null);
-              }}
-              style={{ marginRight: '8px' }}
-            >
-              Hủy
-            </Button>
-            <Button 
-              type="primary" 
-              htmlType="submit"
-                loading={payLoading}
-              icon={<PayCircleOutlined />}
-            >
-              Xác nhận thanh toán
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
+      )}
     </div>
   );
 }
